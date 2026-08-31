@@ -46,6 +46,15 @@
         <p class="login-app-subtitle">Sistem Pemantau Part & Perawatan Motor Matic</p>
       </div>
 
+      <!-- Cloud DB Status Pill on Login Screen -->
+      <div class="login-cloud-status-wrapper">
+        <button type="button" class="login-cloud-status-btn offline" id="btnLoginOpenCloudModal" title="Klik untuk Pengaturan Database Cloud Supabase">
+          <span class="sync-dot"></span>
+          <span id="loginCloudStatusText">Mode Lokal (Klik untuk Hubungkan Cloud)</span>
+          <i data-lucide="cloud" style="width: 14px; height: 14px; margin-left: 4px;"></i>
+        </button>
+      </div>
+
       <!-- Auth Switcher Tabs -->
       <div class="auth-tabs">
         <button type="button" class="auth-tab-btn active" id="tabBtnLogin" data-auth-tab="login">

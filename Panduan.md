@@ -67,16 +67,23 @@ Agar data tersimpan permanen di cloud dan tersinkronisasi di semua perangkat (te
    - **Project URL** (contoh: `https://abcdefghijkl.supabase.co`)
    - **Project API Keys (`anon` / `public`)** (contoh: `eyJhbGciOiJIUzI1NiIsIn...`)
 
-### Langkah B: Hubungkan Supabase di Aplikasi MOTO-TRACK
-1. Buka aplikasi MOTO-TRACK (lokal maupun di URL Vercel).
-2. Login menggunakan akun **Admin** (`admin`).
-3. Klik ikon **Database/Cloud** di header (atau klik status pill **Mode Lokal**).
-4. Masukkan **Project URL** dan **Anon Key** yang sudah disalin dari Supabase.
-5. Klik **Simpan & Hubungkan Supabase**.
-6. Jika berhasil, status pill di header akan berubah hijau menjadi **Cloud Terhubung**.
-7. Data lokal Anda akan otomatis tersinkronisasi ke cloud database Supabase.
+### Langkah B: Hubungkan Supabase di Aplikasi MOTO-TRACK (2 Cara Mudah)
 
-*(Opsional)* Anda juga dapat mengisi `DEFAULT_CONFIG` pada file `supabase-config.js` dengan URL dan Anon Key agar aplikasi langsung terhubung ke Supabase secara otomatis saat pertama kali dibuka di hosting Vercel.
+#### Cara 1: Isi `DEFAULT_CONFIG` di Code (Sangat Direkomendasikan untuk Vercel)
+Buka file `supabase-config.js` di editor Anda, lalu isi variabel `DEFAULT_CONFIG` dengan data Supabase Anda:
+```javascript
+const DEFAULT_CONFIG = {
+  url: 'https://proyek-anda.supabase.co',
+  anonKey: 'eyJhbGciOiJIUzI1NiIsIn...'
+};
+```
+Kemudian `git push` ke GitHub. **Hasilnya:** Setiap browser, HP, atau device baru yang membuka link Vercel akan langsung otomatis terhubung ke Supabase secara instan tanpa perlu setting manual lagi.
+
+#### Cara 2: Hubungkan Langsung dari Halaman Login
+1. Di layar login browser/HP mana saja, klik tombol status cloud: **"Mode Lokal (Klik untuk Hubungkan Cloud)"**.
+2. Masukkan **Project URL** dan **Anon Key** Supabase Anda.
+3. Klik **Simpan & Hubungkan Supabase**.
+4. Sistem akan langsung terkoneksi ke Supabase dan menarik seluruh daftar akun yang pernah didaftarkan. Anda langsung bisa login dengan akun Anda (misal `haris`).
 
 ---
 
@@ -92,7 +99,6 @@ MOTO-TRACK adalah aplikasi statis murni, sehingga proses deploy ke Vercel sangat
 6. **Root Directory:** `./` (default).
 7. Klik tombol **Deploy**.
 8. Dalam beberapa detik, situs Anda sudah aktif di URL publik Vercel (contoh: `https://mototrack.vercel.app`).
-9. Buka URL Vercel tersebut, login sebagai `admin`, lalu hubungkan Supabase via modal pengaturan Cloud.
 
 ---
 

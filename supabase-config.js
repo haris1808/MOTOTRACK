@@ -8,8 +8,8 @@ const SupabaseManager = (function () {
 
   // Opsi: Jika ingin mengatur Supabase URL & Anon Key secara default di code/deploy
   const DEFAULT_CONFIG = {
-    url: '',      // e.g. 'https://xyzcompany.supabase.co'
-    anonKey: ''   // e.g. 'eyJhbGciOiJIUzI1NiIsIn...'
+    url: '',      // e.g. 'https://wusdvotxlmlbcpklgicn.supabase.co'
+    anonKey: ''   // e.g. 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind1c2R2b3R4bG1sYmNwa2xnaWNuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgxNDQ1NTIsImV4cCI6MjEwMzcyMDU1Mn0.C7jAoERBj57vi4xRcLDMBvz6ou_d_NfTlauyaRAkMIE'
   };
 
   let client = null;

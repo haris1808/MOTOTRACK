@@ -185,7 +185,7 @@
       }
     }
 
-    function saveUser(user) {
+    async function saveUser(user) {
       var users = getUsers();
       var idx = users.findIndex(function (u) { return u.id === user.id; });
       if (idx >= 0) users[idx] = user; else users.push(user);
@@ -193,23 +193,22 @@
 
       if (isCloud()) {
         try {
-          sb().from('users').upsert({
+          var res = await sb().from('users').upsert({
             id: user.id,
             username: user.username,
             full_name: user.fullName || user.username,
             password: user.password,
             created_at: user.created_at || new Date().toISOString()
-          }, { onConflict: 'id' }).then(function (res) {
-            if (res && res.error) console.error('Cloud saveUser error:', res.error);
-          }).catch(function (e) {
-            console.warn('Cloud saveUser sync failed:', e);
-          });
+          }, { onConflict: 'id' });
+          if (res && res.error) {
+            console.error('Cloud saveUser error:', res.error);
+          }
         } catch (e) { console.warn('Cloud saveUser sync failed:', e); }
       }
       return user;
     }
 
-    function registerUser(userData) {
+    async function registerUser(userData) {
       var username = (userData.username || '').trim().toLowerCase();
       var users = getUsers();
       var exists = users.find(function (u) { return u.username.toLowerCase() === username; });
@@ -225,25 +224,27 @@
         created_at: new Date().toISOString()
       };
 
-      users.push(newUser);
-      lsSet(LS_USERS, users);
-
       if (isCloud()) {
         try {
-          sb().from('users').upsert({
+          var res = await sb().from('users').upsert({
             id: newUser.id,
             username: newUser.username,
             full_name: newUser.fullName,
             password: newUser.password,
             created_at: newUser.created_at
-          }, { onConflict: 'id' }).then(function (res) {
-            if (res && res.error) console.error('Cloud registerUser error:', res.error);
-          }).catch(function (e) {
-            console.warn('Cloud registerUser sync failed:', e);
-          });
-        } catch (e) { console.warn('Cloud registerUser sync failed:', e); }
+          }, { onConflict: 'id' });
+          if (res && res.error) {
+            console.error('Cloud registerUser error:', res.error);
+            throw new Error(res.error.message || 'Gagal menyimpan akun ke database cloud.');
+          }
+        } catch (e) {
+          console.warn('Cloud registerUser sync failed:', e);
+          throw e;
+        }
       }
 
+      users.push(newUser);
+      lsSet(LS_USERS, users);
       return newUser;
     }
 
@@ -280,7 +281,7 @@
       return u ? u.id : 'usr_admin_default';
     }
 
-    function updateUserProfile(userId, fullName, oldPassword, newPassword) {
+    async function updateUserProfile(userId, fullName, oldPassword, newPassword) {
       var users = getUsers();
       var user = users.find(function (u) { return u.id === userId; });
       if (!user) throw new Error('Pengguna tidak ditemukan');
@@ -297,7 +298,7 @@
         user.password = newPassword;
       }
 
-      saveUser(user);
+      await saveUser(user);
 
       var current = getCurrentUser();
       if (current && current.id === user.id) {
@@ -732,14 +733,14 @@
       return target;
     }
 
-    function resetUserPasswordByAdmin(userId, newPassword) {
+    async function resetUserPasswordByAdmin(userId, newPassword) {
       var users = getUsers();
       var user = users.find(function (u) { return u.id === userId; });
       if (!user) throw new Error('Pengguna tidak ditemukan');
       if (!newPassword || newPassword.length < 4) throw new Error('Password baru minimal 4 karakter!');
 
       user.password = newPassword;
-      saveUser(user);
+      await saveUser(user);
       return user;
     }
 
@@ -917,11 +918,16 @@
   }
 
   async function doLogin(username, password) {
-    var user = DataStore.authenticateUser(username, password);
-    if (!user && window.SupabaseManager && SupabaseManager.isCloudMode()) {
-      await DataStore.syncUsersFromCloud();
-      user = DataStore.authenticateUser(username, password);
+    if (window.SupabaseManager) {
+      await SupabaseManager.ensureConnected();
     }
+
+    // Direct cloud fetch if Supabase is connected to ensure cross-device login works immediately
+    if (window.SupabaseManager && SupabaseManager.isCloudMode()) {
+      await DataStore.syncUsersFromCloud();
+    }
+
+    var user = DataStore.authenticateUser(username, password);
     if (user) {
       DataStore.setCurrentUser(user);
       return user;
@@ -930,7 +936,7 @@
   }
 
   async function doRegister(fullName, username, password) {
-    var user = DataStore.registerUser({ fullName: fullName, username: username, password: password });
+    var user = await DataStore.registerUser({ fullName: fullName, username: username, password: password });
     if (user) {
       DataStore.setCurrentUser(user);
       return user;
@@ -2057,6 +2063,22 @@
   // ── Cloud Sync Status ──────────────────────────────────────
 
   function updateCloudPill(connected) {
+    // 1. Update Login Screen Cloud Pill
+    var loginPill = document.getElementById('btnLoginOpenCloudModal');
+    var loginText = document.getElementById('loginCloudStatusText');
+    if (loginPill && loginText) {
+      if (connected) {
+        loginPill.classList.remove('offline');
+        loginPill.classList.add('connected');
+        loginText.textContent = 'Cloud Terhubung (Supabase Online)';
+      } else {
+        loginPill.classList.remove('connected');
+        loginPill.classList.add('offline');
+        loginText.textContent = 'Mode Lokal (Klik untuk Hubungkan Cloud)';
+      }
+    }
+
+    // 2. Update Authenticated Header Cloud Pill
     var pill = document.getElementById('cloudSyncStatusPill');
     if (!pill) return;
     var user = DataStore.getCurrentUser();
@@ -3020,6 +3042,15 @@
         openModal('firebaseSettingsModal');
       });
     }
+
+    var btnLoginCloud = document.getElementById('btnLoginOpenCloudModal');
+    if (btnLoginCloud) {
+      btnLoginCloud.addEventListener('click', function () {
+        prefillCloudSettingsForm();
+        openModal('firebaseSettingsModal');
+      });
+    }
+
     var cloudPill = document.getElementById('cloudSyncStatusPill');
     if (cloudPill) {
       cloudPill.addEventListener('click', function (e) {
@@ -3055,9 +3086,13 @@
             updateCloudPill(true);
             closeModal('firebaseSettingsModal');
             showToast('Berhasil terhubung ke Supabase Cloud!', 'success');
-            // Sync local data to cloud
-            var data = await DataStore.getAllData();
-            await DataStore.importAllData(data);
+            // Always pull registered users from cloud
+            await DataStore.syncUsersFromCloud();
+            if (isAuthenticated()) {
+              var data = await DataStore.getAllData();
+              await DataStore.importAllData(data);
+              await initAppData(false);
+            }
           } else {
             showToast('Gagal terhubung ke Supabase. Periksa URL dan Anon Key.', 'error');
           }
