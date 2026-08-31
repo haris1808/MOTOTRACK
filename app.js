@@ -1078,10 +1078,10 @@
         '<td>' +
           '<div class="admin-user-actions">' +
             (!u.isAdmin
-              ? '<button class="btn-icon btn-xs btn-admin-reset-pw" data-user-id="' + u.id + '" data-user-name="' + escHtml(u.fullName) + '" title="Reset Password">' +
+              ? '<button class="btn-icon btn-xs btn-admin-reset-pw" data-user-id="' + u.id + '" data-user-name="' + escHtml(u.fullName) + '" data-user-username="' + escHtml(u.username) + '" title="Reset Password">' +
                   '<i data-lucide="key"></i>' +
                 '</button>' +
-                '<button class="btn-icon btn-xs btn-admin-delete-user" data-user-id="' + u.id + '" data-user-name="' + escHtml(u.fullName) + '" title="Hapus Akun Pengguna">' +
+                '<button class="btn-icon btn-xs btn-admin-delete-user" data-user-id="' + u.id + '" data-user-name="' + escHtml(u.fullName) + '" data-user-username="' + escHtml(u.username) + '" title="Hapus Akun Pengguna">' +
                   '<i data-lucide="trash-2"></i>' +
                 '</button>'
               : '<span class="text-xs text-muted" style="font-size:0.72rem;color:var(--text-faint);">Utama</span>'
@@ -2343,19 +2343,28 @@
         if (btnReset) {
           var uid = btnReset.getAttribute('data-user-id');
           var uname = btnReset.getAttribute('data-user-name') || 'Pengguna';
-          var newPw = prompt('Masukkan password baru untuk ' + uname + ' (minimal 4 karakter):');
-          if (newPw !== null) {
-            if (newPw.trim().length < 4) {
-              showToast('Password baru minimal 4 karakter!', 'error');
-              return;
-            }
-            try {
-              DataStore.resetUserPasswordByAdmin(uid, newPw.trim());
-              showToast('Password pengguna "' + uname + '" berhasil direset!', 'success');
-            } catch (err) {
-              showToast(err.message, 'error');
-            }
+          var uusername = btnReset.getAttribute('data-user-username') || '';
+          
+          var idInput = document.getElementById('adminResetUserId');
+          var nameEl = document.getElementById('adminResetFullName');
+          var usernameEl = document.getElementById('adminResetUsername');
+          var avatarEl = document.getElementById('adminResetAvatar');
+          var pwInput = document.getElementById('adminResetNewPassword');
+
+          if (idInput) idInput.value = uid;
+          if (nameEl) nameEl.textContent = uname;
+          if (usernameEl) usernameEl.textContent = '@' + uusername;
+          if (avatarEl) avatarEl.textContent = (uname || 'U').charAt(0).toUpperCase();
+          if (pwInput) {
+            pwInput.value = '';
+            pwInput.type = 'password';
           }
+          var eyeIcon = document.getElementById('eyeAdminResetIcon');
+          if (eyeIcon) eyeIcon.setAttribute('data-lucide', 'eye');
+
+          openModal('adminResetPasswordModal');
+          if (typeof lucide !== 'undefined') lucide.createIcons();
+          if (pwInput) setTimeout(function () { pwInput.focus(); }, 150);
           return;
         }
 
@@ -2367,7 +2376,7 @@
 
           var confirmed = await showConfirmDialog({
             title: 'Hapus Akun Pengguna',
-            message: 'Apakah Anda yakin ingin menghapus akun <strong>"' + escHtml(delUname) + '"</strong> beserta seluruh data motor dan riwayat servisnya?',
+            message: 'Apakah Anda yakin ingin menghapus akun <strong>"' + escHtml(delUname) + '"</strong>?<br><span style="color:var(--text-muted);font-size:0.82rem;margin-top:0.35rem;display:block;">Seluruh data motor dan riwayat servis milik pengguna ini akan ikut terhapus permanen.</span>',
             icon: 'user-x',
             type: 'danger',
             confirmText: 'Ya, Hapus Akun',
@@ -2386,6 +2395,61 @@
           }
           return;
         }
+      });
+    }
+
+    // ── Admin Reset Password Form Submit ──
+    var resetPwForm = document.getElementById('adminResetPasswordForm');
+    if (resetPwForm) {
+      resetPwForm.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        var uid = document.getElementById('adminResetUserId').value;
+        var newPw = document.getElementById('adminResetNewPassword').value;
+        var nameEl = document.getElementById('adminResetFullName');
+        var uname = nameEl ? nameEl.textContent : 'Pengguna';
+
+        if (!newPw || newPw.trim().length < 4) {
+          showToast('Password baru minimal 4 karakter!', 'error');
+          return;
+        }
+
+        var submitBtn = document.getElementById('btnSubmitAdminResetPw');
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.innerHTML = '<i data-lucide="loader-2" class="spin"></i> Menyimpan...';
+        }
+
+        try {
+          await DataStore.resetUserPasswordByAdmin(uid, newPw.trim());
+          closeModal('adminResetPasswordModal');
+          showToast('Password pengguna "' + uname + '" berhasil direset!', 'success');
+        } catch (err) {
+          showToast('Gagal mereset password: ' + err.message, 'error');
+        } finally {
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i data-lucide="check"></i> Simpan Password';
+            if (typeof lucide !== 'undefined') lucide.createIcons({ nodes: [submitBtn] });
+          }
+        }
+      });
+    }
+
+    // Toggle Password in Admin Reset Modal
+    var btnToggleAdminReset = document.getElementById('btnToggleAdminResetPw');
+    if (btnToggleAdminReset) {
+      btnToggleAdminReset.addEventListener('click', function () {
+        var pwInput = document.getElementById('adminResetNewPassword');
+        var eyeIcon = document.getElementById('eyeAdminResetIcon');
+        if (!pwInput) return;
+        if (pwInput.type === 'password') {
+          pwInput.type = 'text';
+          if (eyeIcon) eyeIcon.setAttribute('data-lucide', 'eye-off');
+        } else {
+          pwInput.type = 'password';
+          if (eyeIcon) eyeIcon.setAttribute('data-lucide', 'eye');
+        }
+        if (typeof lucide !== 'undefined') lucide.createIcons({ nodes: [btnToggleAdminReset] });
       });
     }
 

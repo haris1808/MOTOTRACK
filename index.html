@@ -979,6 +979,54 @@
     </div>
   </div>
 
+  <!-- Modal: Reset Password Pengguna (Admin) -->
+  <div class="modal-backdrop" id="adminResetPasswordModal" style="z-index: 2200;">
+    <div class="modal-container modal-sm">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <div class="modal-badge-icon" style="background: rgba(245, 158, 11, 0.15); color: #f59e0b; border-color: rgba(245, 158, 11, 0.3);">
+            <i data-lucide="key"></i>
+          </div>
+          <div>
+            <h3 class="modal-title">Reset Password Pengguna</h3>
+            <p class="modal-subtitle">Atur kata sandi baru untuk akun pengguna ini</p>
+          </div>
+        </div>
+        <button class="modal-close-btn" data-close-modal="adminResetPasswordModal"><i data-lucide="x"></i></button>
+      </div>
+
+      <form id="adminResetPasswordForm" class="modal-body">
+        <input type="hidden" id="adminResetUserId" />
+        
+        <div class="user-target-card mb-3" style="background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 0.75rem 1rem; display: flex; align-items: center; gap: 0.75rem;">
+          <div class="admin-user-avatar" id="adminResetAvatar" style="width: 38px; height: 38px; font-size: 1rem;">U</div>
+          <div>
+            <div style="font-weight: 700; color: var(--text-primary);" id="adminResetFullName">Nama Pengguna</div>
+            <div style="font-size: 0.78rem; color: var(--primary-cyan); font-family: var(--font-mono);" id="adminResetUsername">@username</div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="adminResetNewPassword"><i data-lucide="lock" class="inline-icon"></i> Password Baru <span class="req">*</span></label>
+          <div class="input-password-wrapper">
+            <input type="password" id="adminResetNewPassword" class="form-input" placeholder="Minimal 4 karakter..." required autocomplete="new-password" />
+            <button type="button" class="btn-toggle-password" id="btnToggleAdminResetPw" title="Lihat/Sembunyikan Password">
+              <i data-lucide="eye" id="eyeAdminResetIcon"></i>
+            </button>
+          </div>
+          <span class="form-hint">Masukkan kata sandi baru untuk pengguna.</span>
+        </div>
+
+        <div class="modal-footer" style="padding-left: 0; padding-right: 0; padding-bottom: 0;">
+          <button type="button" class="btn btn-secondary" data-close-modal="adminResetPasswordModal">Batal</button>
+          <button type="submit" class="btn btn-primary" id="btnSubmitAdminResetPw">
+            <i data-lucide="check"></i> Simpan Password
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- Modal 8: Pengingat Servis & Part Wajib Ganti / Perhatian (Auto Reminder) -->
   <div class="modal-backdrop" id="maintenanceAlertModal">
     <div class="modal-container modal-lg">
