@@ -16,6 +16,18 @@ const SupabaseManager = (function () {
   let connected = false;
 
   function loadConfig() {
+    // 1. Prioritize configuration set in index.html (window.DEFAULT_CONFIG or window.SUPABASE_CONFIG)
+    const winConfig = window.DEFAULT_CONFIG || window.SUPABASE_CONFIG;
+    if (winConfig && typeof winConfig === 'object' && winConfig.url && winConfig.anonKey && winConfig.url.trim() && winConfig.anonKey.trim()) {
+      return { url: winConfig.url.trim(), anonKey: winConfig.anonKey.trim() };
+    }
+
+    // 2. Check DEFAULT_CONFIG in this file
+    if (DEFAULT_CONFIG && DEFAULT_CONFIG.url && DEFAULT_CONFIG.anonKey && DEFAULT_CONFIG.url.trim() && DEFAULT_CONFIG.anonKey.trim()) {
+      return { url: DEFAULT_CONFIG.url.trim(), anonKey: DEFAULT_CONFIG.anonKey.trim() };
+    }
+
+    // 3. Fallback to localStorage
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
@@ -26,9 +38,6 @@ const SupabaseManager = (function () {
       }
     } catch (e) { /* ignore */ }
 
-    if (DEFAULT_CONFIG && DEFAULT_CONFIG.url && DEFAULT_CONFIG.anonKey) {
-      return DEFAULT_CONFIG;
-    }
     return null;
   }
 

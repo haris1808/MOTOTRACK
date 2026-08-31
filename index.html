@@ -1,20 +1,24 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MOTO-TRACK | Tracker Pergantian Part Motor Matic (KM-Based)</title>
-  <meta name="description" content="Aplikasi pemantau jadwal servis dan penggantian sparepart motor matic berbasis kilometer (KM) akurat, lengkap dengan riwayat pengeluaran dan indikator keausan part.">
-  
+  <meta name="description"
+    content="Aplikasi pemantau jadwal servis dan penggantian sparepart motor matic berbasis kilometer (KM) akurat, lengkap dengan riwayat pengeluaran dan indikator keausan part.">
+
   <!-- Favicon & Touch Icons -->
   <link rel="icon" type="image/png" href="assets/images/favicon.png">
   <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
   <link rel="apple-touch-icon" href="assets/images/favicon.png">
-  
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-  
+  <link
+    href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap"
+    rel="stylesheet">
+
   <!-- Lucide Icons CDN -->
   <script src="https://unpkg.com/lucide@latest"></script>
   <!-- Chart.js for statistics -->
@@ -23,10 +27,23 @@
   <!-- Supabase JS Client SDK (CDN) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
+  <!-- =========================================================================
+       KONFIGURASI SUPABASE DATABASE (CLOUD)
+       Masukkan Project URL dan Anon Key Anda di bawah ini agar otomatis aktif di semua perangkat.
+       ========================================================================= -->
+  <script>
+    const DEFAULT_CONFIG = {
+      url: 'https://wusdvotxlmlbcpklgicn.supabase.co',      // Ganti dengan Project URL Supabase Anda (contoh: 'https://abcdefghijkl.supabase.co')
+      anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind1c2R2b3R4bG1sYmNwa2xnaWNuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgxNDQ1NTIsImV4cCI6MjEwMzcyMDU1Mn0.C7jAoERBj57vi4xRcLDMBvz6ou_d_NfTlauyaRAkMIE'   // Ganti dengan anon public key Supabase Anda (contoh: 'eyJhbGciOiJIUzI1NiIsIn...')
+    };
+    window.DEFAULT_CONFIG = DEFAULT_CONFIG;
+  </script>
+
   <link rel="stylesheet" href="styles.css">
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#0b0f19">
 </head>
+
 <body>
   <!-- Background Glow & Grid Effects -->
   <div class="bg-glow bg-glow-1"></div>
@@ -44,15 +61,6 @@
         </div>
         <h1 class="login-app-title">MOTO<span>TRACK</span></h1>
         <p class="login-app-subtitle">Sistem Pemantau Part & Perawatan Motor Matic</p>
-      </div>
-
-      <!-- Cloud DB Status Pill on Login Screen -->
-      <div class="login-cloud-status-wrapper">
-        <button type="button" class="login-cloud-status-btn offline" id="btnLoginOpenCloudModal" title="Klik untuk Pengaturan Database Cloud Supabase">
-          <span class="sync-dot"></span>
-          <span id="loginCloudStatusText">Mode Lokal (Klik untuk Hubungkan Cloud)</span>
-          <i data-lucide="cloud" style="width: 14px; height: 14px; margin-left: 4px;"></i>
-        </button>
       </div>
 
       <!-- Auth Switcher Tabs -->
@@ -79,13 +87,15 @@
 
         <div class="form-group">
           <label for="loginUsername"><i data-lucide="user" class="inline-icon"></i> Username</label>
-          <input type="text" id="loginUsername" class="form-input" placeholder="Masukkan username..." autocomplete="username" required />
+          <input type="text" id="loginUsername" class="form-input" placeholder="Masukkan username..."
+            autocomplete="username" required />
         </div>
 
         <div class="form-group">
           <label for="loginPassword"><i data-lucide="lock" class="inline-icon"></i> Password</label>
           <div class="input-password-wrapper">
-            <input type="password" id="loginPassword" class="form-input" placeholder="Masukkan password..." autocomplete="current-password" required />
+            <input type="password" id="loginPassword" class="form-input" placeholder="Masukkan password..."
+              autocomplete="current-password" required />
             <button type="button" class="btn-toggle-password" id="btnTogglePassword" title="Lihat/Sembunyikan Password">
               <i data-lucide="eye" id="eyeIcon"></i>
             </button>
@@ -110,29 +120,37 @@
         </div>
 
         <div class="form-group">
-          <label for="regFullName"><i data-lucide="user-check" class="inline-icon"></i> Nama Lengkap / Panggilan <span class="req">*</span></label>
+          <label for="regFullName"><i data-lucide="user-check" class="inline-icon"></i> Nama Lengkap / Panggilan <span
+              class="req">*</span></label>
           <input type="text" id="regFullName" class="form-input" placeholder="Contoh: Haris Setiawan" required />
         </div>
 
         <div class="form-group">
-          <label for="regUsername"><i data-lucide="at-sign" class="inline-icon"></i> Username <span class="req">*</span></label>
-          <input type="text" id="regUsername" class="form-input" placeholder="Contoh: haris" autocomplete="username" required />
+          <label for="regUsername"><i data-lucide="at-sign" class="inline-icon"></i> Username <span
+              class="req">*</span></label>
+          <input type="text" id="regUsername" class="form-input" placeholder="Contoh: haris" autocomplete="username"
+            required />
           <span class="form-hint">Username harus unik (huruf kecil & angka tanpa spasi).</span>
         </div>
 
         <div class="form-group">
-          <label for="regPassword"><i data-lucide="lock" class="inline-icon"></i> Password <span class="req">*</span></label>
+          <label for="regPassword"><i data-lucide="lock" class="inline-icon"></i> Password <span
+              class="req">*</span></label>
           <div class="input-password-wrapper">
-            <input type="password" id="regPassword" class="form-input" placeholder="Minimal 4 karakter..." autocomplete="new-password" required />
-            <button type="button" class="btn-toggle-password" id="btnToggleRegPassword" title="Lihat/Sembunyikan Password">
+            <input type="password" id="regPassword" class="form-input" placeholder="Minimal 4 karakter..."
+              autocomplete="new-password" required />
+            <button type="button" class="btn-toggle-password" id="btnToggleRegPassword"
+              title="Lihat/Sembunyikan Password">
               <i data-lucide="eye" id="eyeRegIcon"></i>
             </button>
           </div>
         </div>
 
         <div class="form-group">
-          <label for="regConfirmPassword"><i data-lucide="shield-check" class="inline-icon"></i> Konfirmasi Password <span class="req">*</span></label>
-          <input type="password" id="regConfirmPassword" class="form-input" placeholder="Ulangi password..." autocomplete="new-password" required />
+          <label for="regConfirmPassword"><i data-lucide="shield-check" class="inline-icon"></i> Konfirmasi Password
+            <span class="req">*</span></label>
+          <input type="password" id="regConfirmPassword" class="form-input" placeholder="Ulangi password..."
+            autocomplete="new-password" required />
         </div>
 
         <button type="submit" class="btn btn-primary w-full btn-login-submit" id="btnRegisterSubmit">
@@ -161,12 +179,6 @@
 
         <!-- Vehicle Selector, Cloud Status & User Actions -->
         <div class="header-actions">
-          <!-- Supabase Cloud Status Pill (Only for Admin) -->
-          <div class="cloud-sync-pill offline" id="cloudSyncStatusPill" title="Klik untuk Pengaturan Supabase Cloud" style="display: none;">
-            <span class="sync-dot"></span>
-            <span class="sync-text">Mode Lokal</span>
-          </div>
-
           <!-- Active User Profile Pill -->
           <div class="user-profile-pill" id="userProfileTrigger" title="Klik untuk Pengaturan Akun & Profil">
             <div class="user-avatar-icon">
@@ -202,17 +214,15 @@
           <!-- Global Action Buttons -->
           <div class="header-buttons">
             <!-- Maintenance Reminder Bell with Count Badge -->
-            <button class="btn-icon btn-alert-bell" id="btnHeaderAlertBell" title="Pengingat Perawatan Motor" style="position: relative;">
+            <button class="btn-icon btn-alert-bell" id="btnHeaderAlertBell" title="Pengingat Perawatan Motor"
+              style="position: relative;">
               <i data-lucide="bell"></i>
               <span class="bell-badge-count" id="headerAlertBellBadge" style="display: none;">0</span>
             </button>
             <!-- Admin Users Management Button (Only for Admin) -->
-            <button class="btn-icon btn-admin-only" id="btnAdminUsersModal" title="Kelola Pengguna Terdaftar (Admin)" style="display: none;">
+            <button class="btn-icon btn-admin-only" id="btnAdminUsersModal" title="Kelola Pengguna Terdaftar (Admin)"
+              style="display: none;">
               <i data-lucide="users"></i>
-            </button>
-            <!-- Supabase Database Settings (Only for Admin) -->
-            <button class="btn-icon btn-admin-only" id="btnOpenFirebaseModal" title="Pengaturan Database Supabase (Admin)" style="display: none;">
-              <i data-lucide="cloud"></i>
             </button>
             <button class="btn-icon" id="btnExportImportModal" title="Cadangkan / Pulihkan Data">
               <i data-lucide="hard-drive-download"></i>
@@ -220,7 +230,7 @@
             <button class="btn-icon" id="btnPrintReport" title="Cetak Rekap Servis">
               <i data-lucide="printer"></i>
             </button>
-            
+
             <!-- User Logout Button -->
             <button class="btn btn-logout" id="btnLogout" title="Keluar dari Aplikasi">
               <i data-lucide="log-out"></i>
@@ -233,7 +243,7 @@
 
     <!-- Main Container -->
     <main class="main-content">
-      
+
       <!-- Maintenance Alert Ribbon / Banner (Shown if critical/warning parts exist) -->
       <div class="maintenance-alert-banner" id="maintenanceAlertBanner" style="display: none;">
         <div class="alert-banner-content">
@@ -345,7 +355,7 @@
 
       <!-- ================= TAB 1: SPAREPART TRACKER ================= -->
       <div class="tab-pane active" id="partsTrackerTab">
-        
+
         <!-- Filters and Search Toolbar -->
         <div class="toolbar-wrapper">
           <div class="search-box">
@@ -420,7 +430,8 @@
         <div class="empty-state" id="emptyHistoryState" style="display: none;">
           <div class="empty-icon"><i data-lucide="clipboard-list"></i></div>
           <h3>Belum Ada Riwayat Servis</h3>
-          <p>Ketika Anda mengklik tombol "Tandai Telah Diganti" pada kartu part, atau mencatat servis manual, riwayat akan otomatis tersimpan di sini.</p>
+          <p>Ketika Anda mengklik tombol "Tandai Telah Diganti" pada kartu part, atau mencatat servis manual, riwayat
+            akan otomatis tersimpan di sini.</p>
         </div>
       </div>
 
@@ -500,7 +511,8 @@
     <footer class="app-footer">
       <div class="footer-content">
         <p><strong>MOTO-TRACK</strong> — Aplikasi Pemantau Usia Part & Servis Motor Matic Berdasarkan Kilometer.</p>
-        <p class="text-muted text-xs">Selalu periksa kondisi fisik sparepart secara berkala di bengkel resmi / terpercaya.</p>
+        <p class="text-muted text-xs">Selalu periksa kondisi fisik sparepart secara berkala di bengkel resmi /
+          terpercaya.</p>
       </div>
     </footer>
   </div>
@@ -508,56 +520,6 @@
   <!-- =========================================================================
        MODALS
        ========================================================================= -->
-
-  <!-- Modal: Supabase Settings -->
-  <div class="modal-backdrop" id="firebaseSettingsModal">
-    <div class="modal-container">
-      <div class="modal-header">
-        <div class="modal-title-group">
-          <div class="modal-badge-icon">
-            <i data-lucide="cloud"></i>
-          </div>
-          <div>
-            <h3 class="modal-title">Pengaturan Database Supabase</h3>
-            <p class="modal-subtitle">Hubungkan database cloud Supabase agar data tersimpan & tersinkron online</p>
-          </div>
-        </div>
-        <button class="modal-close-btn" data-close-modal="firebaseSettingsModal">
-          <i data-lucide="x"></i>
-        </button>
-      </div>
-
-      <form id="firebaseSettingsForm" class="modal-body">
-        <p class="text-muted text-xs mb-3">
-          Masukkan konfigurasi proyek Supabase Anda dari <strong>Supabase Dashboard > Settings > API</strong>.
-        </p>
-
-        <div class="form-group">
-          <label for="supabaseUrl">Project URL <span class="req">*</span></label>
-          <input type="url" id="supabaseUrl" class="form-input font-mono text-xs" placeholder="https://xxxxx.supabase.co" required />
-          <span class="form-hint">URL project dari Supabase Dashboard > Settings > API > Project URL</span>
-        </div>
-
-        <div class="form-group">
-          <label for="supabaseAnonKey">Anon / Public Key <span class="req">*</span></label>
-          <input type="text" id="supabaseAnonKey" class="form-input font-mono text-xs" placeholder="eyJhbGciOiJIUzI1NiIs..." required />
-          <span class="form-hint">anon public key dari Supabase Dashboard > Settings > API > Project API keys</span>
-        </div>
-
-        <div class="modal-alert-box">
-          <i data-lucide="shield-check"></i>
-          <span>Jika belum menghubungkan Supabase, sistem tetap bekerja normal dalam <strong>Mode Lokal Offline</strong>.</span>
-        </div>
-
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-close-modal="firebaseSettingsModal">Batal</button>
-          <button type="submit" class="btn btn-primary">
-            <i data-lucide="save"></i> Simpan & Hubungkan Supabase
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
 
   <!-- Modal 1: Tandai Telah Diganti / Log Servis Part -->
   <div class="modal-backdrop" id="serviceLogModal">
@@ -594,11 +556,13 @@
         <div class="form-row">
           <div class="form-group flex-1">
             <label for="logPartBrand">Merek / Tipe Sparepart yang Dipasang</label>
-            <input type="text" id="logPartBrand" class="form-input" placeholder="Contoh: AHM Oil MPX2 10W-30 / Motul Scooter Expert" />
+            <input type="text" id="logPartBrand" class="form-input"
+              placeholder="Contoh: AHM Oil MPX2 10W-30 / Motul Scooter Expert" />
           </div>
           <div class="form-group flex-1">
             <label for="logShopName">Nama Bengkel / Lokasi</label>
-            <input type="text" id="logShopName" class="form-input" placeholder="Contoh: AHASS / Bengkel Langganan / Servis Sendiri" />
+            <input type="text" id="logShopName" class="form-input"
+              placeholder="Contoh: AHASS / Bengkel Langganan / Servis Sendiri" />
           </div>
         </div>
 
@@ -615,12 +579,14 @@
 
         <div class="form-group">
           <label for="logNotes">Catatan Tambahan (Opsional)</label>
-          <textarea id="logNotes" class="form-textarea" rows="2" placeholder="Contoh: Kondisi oli lama sudah hitam pekat, baut pembuangan oli sudah diganti ring baru."></textarea>
+          <textarea id="logNotes" class="form-textarea" rows="2"
+            placeholder="Contoh: Kondisi oli lama sudah hitam pekat, baut pembuangan oli sudah diganti ring baru."></textarea>
         </div>
 
         <div class="modal-alert-box">
           <i data-lucide="info"></i>
-          <span>Menyimpan servis ini akan memperbarui status part menjadi <strong>100% Baru / Aman</strong> di KM yang Anda masukkan.</span>
+          <span>Menyimpan servis ini akan memperbarui status part menjadi <strong>100% Baru / Aman</strong> di KM yang
+            Anda masukkan.</span>
         </div>
 
         <div class="modal-footer">
@@ -672,7 +638,8 @@
         <div class="form-row">
           <div class="form-group flex-2">
             <label for="partName">Nama Sparepart <span class="req">*</span></label>
-            <input type="text" id="partName" class="form-input" placeholder="Contoh: Grease CVT / Kanvas Ganda / Aki GTZ6V" required />
+            <input type="text" id="partName" class="form-input"
+              placeholder="Contoh: Grease CVT / Kanvas Ganda / Aki GTZ6V" required />
           </div>
           <div class="form-group flex-1">
             <label for="partCategory">Kategori <span class="req">*</span></label>
@@ -690,7 +657,8 @@
           <div class="form-group flex-1">
             <label for="partIntervalKm">Interval Penggantian (Setiap ... KM) <span class="req">*</span></label>
             <div class="input-with-unit">
-              <input type="number" id="partIntervalKm" class="form-input font-mono" min="100" placeholder="10000" required />
+              <input type="number" id="partIntervalKm" class="form-input font-mono" min="100" placeholder="10000"
+                required />
               <span class="input-unit">KM</span>
             </div>
             <span class="form-hint">Jarak tempuh maksimal sebelum part wajib diganti.</span>
@@ -699,7 +667,8 @@
           <div class="form-group flex-1">
             <label for="partLastReplacedKm">Terakhir Diganti di KM Berapa? <span class="req">*</span></label>
             <div class="input-with-unit">
-              <input type="number" id="partLastReplacedKm" class="form-input font-mono" min="0" placeholder="20000" required />
+              <input type="number" id="partLastReplacedKm" class="form-input font-mono" min="0" placeholder="20000"
+                required />
               <span class="input-unit">KM</span>
             </div>
             <span class="form-hint">Isi KM saat part ini terakhir dipasang/diservis.</span>
@@ -752,7 +721,8 @@
 
         <div class="form-group">
           <label for="partDescription">Deskripsi Singkat / Rekomendasi Part</label>
-          <input type="text" id="partDescription" class="form-input" placeholder="Contoh: Gunakan standar pabrikan atau setara OEM" />
+          <input type="text" id="partDescription" class="form-input"
+            placeholder="Contoh: Gunakan standar pabrikan atau setara OEM" />
         </div>
 
         <div class="modal-footer">
@@ -777,7 +747,8 @@
         <div class="form-row">
           <div class="form-group flex-2">
             <label for="vehName">Nama / Model Motor <span class="req">*</span></label>
-            <input type="text" id="vehName" class="form-input" placeholder="Contoh: Honda Beat Deluxe / Yamaha NMAX 155" required />
+            <input type="text" id="vehName" class="form-input" placeholder="Contoh: Honda Beat Deluxe / Yamaha NMAX 155"
+              required />
           </div>
           <div class="form-group flex-1">
             <label for="vehYear">Tahun Pembuatan <span class="req">*</span></label>
@@ -793,7 +764,8 @@
           <div class="form-group flex-1">
             <label for="vehCurrentOdoInput">Kilometer (KM) Saat Ini <span class="req">*</span></label>
             <div class="input-with-unit">
-              <input type="number" id="vehCurrentOdoInput" class="form-input font-mono" min="0" placeholder="15000" required />
+              <input type="number" id="vehCurrentOdoInput" class="form-input font-mono" min="0" placeholder="15000"
+                required />
               <span class="input-unit">KM</span>
             </div>
           </div>
@@ -805,7 +777,8 @@
             <option value="standard_matic">Standar Motor Matic Lengkap (13 Part Otomatis Terpasang)</option>
             <option value="empty">Kosong (Saya ingin atur part sendiri satu-persatu)</option>
           </select>
-          <span class="form-hint">Preset standar otomatis menyediakan interval oli, CVT, filter, busi, rem, radiator, dll.</span>
+          <span class="form-hint">Preset standar otomatis menyediakan interval oli, CVT, filter, busi, rem, radiator,
+            dll.</span>
         </div>
 
         <div class="modal-footer">
@@ -880,35 +853,41 @@
 
       <form id="userProfileForm" class="modal-body">
         <div class="form-group">
-          <label for="profileFullName"><i data-lucide="user" class="inline-icon"></i> Nama Lengkap / Panggilan <span class="req">*</span></label>
+          <label for="profileFullName"><i data-lucide="user" class="inline-icon"></i> Nama Lengkap / Panggilan <span
+              class="req">*</span></label>
           <input type="text" id="profileFullName" class="form-input" required />
         </div>
 
         <div class="form-group">
           <label for="profileUsername"><i data-lucide="at-sign" class="inline-icon"></i> Username</label>
-          <input type="text" id="profileUsername" class="form-input" disabled style="opacity: 0.7; cursor: not-allowed;" />
+          <input type="text" id="profileUsername" class="form-input" disabled
+            style="opacity: 0.7; cursor: not-allowed;" />
           <span class="form-hint">Username akun unik dan tidak dapat diubah.</span>
         </div>
 
         <div class="divider-line my-1" style="border-top: 1px dashed var(--border-subtle); margin: 0.5rem 0;"></div>
 
-        <div class="form-group-title" style="font-size: 0.8rem; font-weight: 700; color: var(--primary-cyan); display: flex; align-items: center; gap: 0.35rem;">
+        <div class="form-group-title"
+          style="font-size: 0.8rem; font-weight: 700; color: var(--primary-cyan); display: flex; align-items: center; gap: 0.35rem;">
           <i data-lucide="key" style="width: 14px; height: 14px;"></i> Ganti Password (Opsional)
         </div>
 
         <div class="form-group">
           <label for="profileOldPassword">Password Saat Ini</label>
-          <input type="password" id="profileOldPassword" class="form-input" placeholder="Masukkan password lama..." autocomplete="current-password" />
+          <input type="password" id="profileOldPassword" class="form-input" placeholder="Masukkan password lama..."
+            autocomplete="current-password" />
         </div>
 
         <div class="form-row">
           <div class="form-group flex-1">
             <label for="profileNewPassword">Password Baru</label>
-            <input type="password" id="profileNewPassword" class="form-input" placeholder="Password baru..." autocomplete="new-password" />
+            <input type="password" id="profileNewPassword" class="form-input" placeholder="Password baru..."
+              autocomplete="new-password" />
           </div>
           <div class="form-group flex-1">
             <label for="profileConfirmNewPassword">Konfirmasi Password</label>
-            <input type="password" id="profileConfirmNewPassword" class="form-input" placeholder="Ulangi..." autocomplete="new-password" />
+            <input type="password" id="profileConfirmNewPassword" class="form-input" placeholder="Ulangi..."
+              autocomplete="new-password" />
           </div>
         </div>
 
@@ -968,7 +947,8 @@
         <div class="admin-search-wrapper my-3">
           <div class="search-input-group">
             <i data-lucide="search" class="search-icon"></i>
-            <input type="text" id="adminSearchUserInput" class="form-input" placeholder="Cari nama pengguna atau username..." />
+            <input type="text" id="adminSearchUserInput" class="form-input"
+              placeholder="Cari nama pengguna atau username..." />
           </div>
         </div>
 
@@ -1009,7 +989,8 @@
           </div>
           <div>
             <h3 class="modal-title" id="alertModalTitle">Pemberitahuan Servis Motor</h3>
-            <p class="modal-subtitle" id="alertModalSubtitle">Komponen yang memerlukan penggantian atau pemeriksaan segera</p>
+            <p class="modal-subtitle" id="alertModalSubtitle">Komponen yang memerlukan penggantian atau pemeriksaan
+              segera</p>
           </div>
         </div>
         <button class="modal-close-btn" data-close-modal="maintenanceAlertModal"><i data-lucide="x"></i></button>
@@ -1039,7 +1020,8 @@
       </div>
 
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-close-modal="maintenanceAlertModal">Tutup Pengingat</button>
+        <button type="button" class="btn btn-secondary" data-close-modal="maintenanceAlertModal">Tutup
+          Pengingat</button>
         <button type="button" class="btn btn-primary" id="btnFilterUrgentParts">
           <i data-lucide="filter"></i> Lihat di Tabel Tracker
         </button>
@@ -1081,4 +1063,5 @@
   <script src="supabase-config.js"></script>
   <script src="app.js"></script>
 </body>
+
 </html>

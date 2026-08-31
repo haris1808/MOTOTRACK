@@ -67,23 +67,26 @@ Agar data tersimpan permanen di cloud dan tersinkronisasi di semua perangkat (te
    - **Project URL** (contoh: `https://abcdefghijkl.supabase.co`)
    - **Project API Keys (`anon` / `public`)** (contoh: `eyJhbGciOiJIUzI1NiIsIn...`)
 
-### Langkah B: Hubungkan Supabase di Aplikasi MOTO-TRACK (2 Cara Mudah)
+### Langkah B: Masukkan Konfigurasi Supabase di `index.html` (Otomatis & Tanpa Perlu Setting Lagi)
 
-#### Cara 1: Isi `DEFAULT_CONFIG` di Code (Sangat Direkomendasikan untuk Vercel)
-Buka file `supabase-config.js` di editor Anda, lalu isi variabel `DEFAULT_CONFIG` dengan data Supabase Anda:
-```javascript
-const DEFAULT_CONFIG = {
-  url: 'https://proyek-anda.supabase.co',
-  anonKey: 'eyJhbGciOiJIUzI1NiIsIn...'
-};
+Buka file [index.html](file:///d:/PROJECT/PORTOFOLIO%20HARIS/MOTOTRACK/index.html), pada bagian `<head>` terdapat script konfigurasi `DEFAULT_CONFIG`. Cukup masukkan **Project URL** dan **Anon Key** Supabase Anda:
+
+```html
+  <script>
+    const DEFAULT_CONFIG = {
+      url: 'https://abcdefghijkl.supabase.co',      // Ganti dengan Project URL Supabase Anda
+      anonKey: 'eyJhbGciOiJIUzI1NiIsIn...'        // Ganti dengan anon public key Supabase Anda
+    };
+    window.DEFAULT_CONFIG = DEFAULT_CONFIG;
+  </script>
 ```
-Kemudian `git push` ke GitHub. **Hasilnya:** Setiap browser, HP, atau device baru yang membuka link Vercel akan langsung otomatis terhubung ke Supabase secara instan tanpa perlu setting manual lagi.
 
-#### Cara 2: Hubungkan Langsung dari Halaman Login
-1. Di layar login browser/HP mana saja, klik tombol status cloud: **"Mode Lokal (Klik untuk Hubungkan Cloud)"**.
-2. Masukkan **Project URL** dan **Anon Key** Supabase Anda.
-3. Klik **Simpan & Hubungkan Supabase**.
-4. Sistem akan langsung terkoneksi ke Supabase dan menarik seluruh daftar akun yang pernah didaftarkan. Anda langsung bisa login dengan akun Anda (misal `haris`).
+Kemudian `git push` ke repository GitHub Anda.
+
+**Hasilnya:**
+* Seluruh perangkat (HP, laptop, tablet, browser baru) yang membuka link Vercel akan **langsung otomatis terhubung ke Supabase**.
+* Tampilan antarmuka bersih tanpa tombol/modal status cloud yang mengganggu.
+* Data motor, riwayat servis, serta akun pengguna (seperti `haris`) akan tersinkronisasi secara online dan real-time di semua perangkat.
 
 ---
 
