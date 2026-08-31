@@ -99,7 +99,13 @@ CREATE INDEX IF NOT EXISTS idx_parts_vehicle_id ON parts(vehicle_id);
 CREATE INDEX IF NOT EXISTS idx_service_logs_vehicle_id ON service_logs(vehicle_id);
 CREATE INDEX IF NOT EXISTS idx_service_logs_service_date ON service_logs(service_date DESC);
 
--- 7. Enable RLS lalu buat policy open-access (karena autentikasi internal di aplikasi)
+-- 7. Grant akses penuh ke role anon dan authenticated (PostgREST API)
+GRANT ALL ON TABLE users TO anon, authenticated;
+GRANT ALL ON TABLE vehicles TO anon, authenticated;
+GRANT ALL ON TABLE parts TO anon, authenticated;
+GRANT ALL ON TABLE service_logs TO anon, authenticated;
+
+-- 8. Enable RLS lalu buat policy open-access untuk SELECT, INSERT, UPDATE, DELETE
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE vehicles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE parts ENABLE ROW LEVEL SECURITY;
@@ -111,7 +117,8 @@ DROP POLICY IF EXISTS "Allow full access to vehicles" ON vehicles;
 DROP POLICY IF EXISTS "Allow full access to parts" ON parts;
 DROP POLICY IF EXISTS "Allow full access to service_logs" ON service_logs;
 
-CREATE POLICY "Allow full access to users" ON users FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Allow full access to vehicles" ON vehicles FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Allow full access to parts" ON parts FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Allow full access to service_logs" ON service_logs FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow full access to users" ON users FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Allow full access to vehicles" ON vehicles FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Allow full access to parts" ON parts FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Allow full access to service_logs" ON service_logs FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
+

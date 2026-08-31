@@ -313,7 +313,13 @@
       var uid = getCurrentUserId();
       if (isCloud()) {
         try {
-          var res = await sb().from('vehicles').select('*').eq('user_id', uid);
+          var query = sb().from('vehicles').select('*');
+          if (uid === 'usr_admin_default') {
+            query = query.or('user_id.eq.usr_admin_default,user_id.is.null');
+          } else {
+            query = query.eq('user_id', uid);
+          }
+          var res = await query;
           if (res.error) throw res.error;
           // Merge with local
           var allVeh = lsGet(LS_VEHICLES).filter(function (v) { return (v.user_id || 'usr_admin_default') !== uid; });
@@ -376,9 +382,11 @@
           var r3 = await sb().from('vehicles').delete().eq('id', id);
           if (r3 && r3.error) {
             console.error('Cloud delete vehicle error:', r3.error);
+            throw new Error(r3.error.message || 'Gagal menghapus motor di database cloud');
           }
         } catch (e) {
           console.warn('Cloud deleteVehicle failed:', e);
+          throw e;
         }
       }
       lsSet(LS_VEHICLES, lsGet(LS_VEHICLES).filter(function (v) { return v.id !== id; }));
@@ -449,11 +457,17 @@
     async function deletePart(id) {
       if (isCloud()) {
         try {
+          // Set reference in service logs to null first
+          await sb().from('service_logs').update({ part_id: null }).eq('part_id', id);
           var res = await sb().from('parts').delete().eq('id', id);
           if (res && res.error) {
             console.error('Cloud deletePart error:', res.error);
+            throw new Error(res.error.message || 'Gagal menghapus sparepart di database cloud');
           }
-        } catch (e) { console.warn('Cloud deletePart failed:', e); }
+        } catch (e) {
+          console.warn('Cloud deletePart failed:', e);
+          throw e;
+        }
       }
       lsSet(LS_PARTS, lsGet(LS_PARTS).filter(function (p) { return p.id !== id; }));
     }
@@ -519,8 +533,12 @@
           var res = await sb().from('service_logs').delete().eq('id', id);
           if (res && res.error) {
             console.error('Cloud deleteServiceLog error:', res.error);
+            throw new Error(res.error.message || 'Gagal menghapus riwayat di database cloud');
           }
-        } catch (e) { console.warn('Cloud deleteServiceLog failed:', e); }
+        } catch (e) {
+          console.warn('Cloud deleteServiceLog failed:', e);
+          throw e;
+        }
       }
       lsSet(LS_LOGS, lsGet(LS_LOGS).filter(function (l) { return l.id !== id; }));
     }
@@ -634,7 +652,15 @@
             await sb().from('parts').delete().eq('vehicle_id', myVehIds[i]);
             await sb().from('vehicles').delete().eq('id', myVehIds[i]);
           }
-        } catch (e) { console.warn('Cloud clearAllData failed:', e); }
+          if (uid === 'usr_admin_default') {
+            await sb().from('vehicles').delete().or('user_id.eq.usr_admin_default,user_id.is.null');
+          } else {
+            await sb().from('vehicles').delete().eq('user_id', uid);
+          }
+        } catch (e) {
+          console.warn('Cloud clearAllData failed:', e);
+          throw e;
+        }
       }
 
       lsSet(LS_VEHICLES, lsGet(LS_VEHICLES).filter(function (v) { return (v.user_id || 'usr_admin_default') !== uid; }));
@@ -1086,16 +1112,7 @@
   // ── Vehicle Module ─────────────────────────────────────────
 
   async function loadVehicles() {
-    var user = DataStore.getCurrentUser();
     var vehicles = await DataStore.getVehicles();
-
-    // If default admin, 0 vehicles, and never initialized before, seed demo data once
-    var demoSeeded = localStorage.getItem('mototrack_demo_seeded');
-    if ((!vehicles || vehicles.length === 0) && user && user.username === 'admin' && !demoSeeded) {
-      localStorage.setItem('mototrack_demo_seeded', '1');
-      await loadDemoData();
-      vehicles = await DataStore.getVehicles();
-    }
 
     if (vehicles && vehicles.length > 0) {
       if (!activeVehicleId || !vehicles.find(function (v) { return v.id === activeVehicleId; })) {
