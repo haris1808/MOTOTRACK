@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="100%" height="100%">
+  <defs>
+    <linearGradient id="beltGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#334155" />
+      <stop offset="50%" stop-color="#1e293b" />
+      <stop offset="100%" stop-color="#0f172a" />
+    </linearGradient>
+    <linearGradient id="pulleyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#94a3b8" />
+      <stop offset="100%" stop-color="#475569" />
+    </linearGradient>
+    <filter id="vbeltGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#06b6d4" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+  <circle cx="60" cy="60" r="54" fill="#0f172a" stroke="rgba(6, 182, 212, 0.25)" stroke-width="2" filter="url(#vbeltGlow)" />
+  <circle cx="60" cy="60" r="48" fill="rgba(6, 182, 212, 0.08)" />
+
+  <!-- Pulley 1 (Drive Pulley) -->
+  <circle cx="38" cy="60" r="16" fill="url(#pulleyGrad)" stroke="#cbd5e1" stroke-width="1.5"/>
+  <circle cx="38" cy="60" r="6" fill="#0f172a"/>
+
+  <!-- Pulley 2 (Driven Pulley) -->
+  <circle cx="82" cy="60" r="22" fill="url(#pulleyGrad)" stroke="#cbd5e1" stroke-width="1.5"/>
+  <circle cx="82" cy="60" r="8" fill="#0f172a"/>
+
+  <!-- V-Belt Outer Loop -->
+  <path d="M 38 44 C 28 44 22 52 22 60 C 22 68 28 76 38 76 L 82 82 C 94 82 104 72 104 60 C 104 48 94 38 82 38 Z" fill="none" stroke="url(#beltGrad)" stroke-width="10" stroke-linejoin="round"/>
+  <path d="M 38 44 C 28 44 22 52 22 60 C 22 68 28 76 38 76 L 82 82 C 94 82 104 72 104 60 C 104 48 94 38 82 38 Z" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linejoin="round"/>
+
+  <!-- Belt Teeth / Grooves -->
+  <path d="
+    M 34 50 L 36 54 M 42 47 L 44 51 M 50 45 L 52 49 M 58 43 L 60 47 M 66 42 L 68 46 M 74 41 L 76 45
+    M 34 70 L 36 66 M 42 73 L 44 69 M 50 75 L 52 71 M 58 77 L 60 73 M 66 78 L 68 74 M 74 79 L 76 75
+  " stroke="#06b6d4" stroke-width="2" stroke-linecap="round"/>
+</svg>

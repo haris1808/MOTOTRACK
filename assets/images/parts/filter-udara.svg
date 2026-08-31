@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="100%" height="100%">
+  <defs>
+    <linearGradient id="frameGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ef4444" />
+      <stop offset="100%" stop-color="#b91c1c" />
+    </linearGradient>
+    <linearGradient id="paperGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#f59e0b" />
+      <stop offset="100%" stop-color="#d97706" />
+    </linearGradient>
+    <filter id="filterGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#ef4444" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+  <circle cx="60" cy="60" r="54" fill="#0f172a" stroke="rgba(239, 68, 68, 0.25)" stroke-width="2" filter="url(#filterGlow)" />
+  <circle cx="60" cy="60" r="48" fill="rgba(239, 68, 68, 0.08)" />
+
+  <!-- Outer Rubber Frame (Viscous filter shape) -->
+  <path d="M 28 36 C 28 30 34 26 42 26 L 82 26 C 92 26 98 32 98 42 L 96 78 C 96 88 88 94 78 94 L 38 94 C 28 94 24 88 24 78 Z" fill="url(#frameGrad)" stroke="#fca5a5" stroke-width="1.5"/>
+
+  <!-- Inner Paper Pleated Filter -->
+  <path d="M 34 34 L 88 34 L 86 86 L 32 86 Z" fill="url(#paperGrad)" stroke="#78350f" stroke-width="1"/>
+
+  <!-- Pleats (Zigzag Paper Pattern) -->
+  <path d="
+    M 36 34 L 36 86 M 41 34 L 41 86 M 46 34 L 46 86 M 51 34 L 51 86 
+    M 56 34 L 56 86 M 61 34 L 61 86 M 66 34 L 66 86 M 71 34 L 71 86 
+    M 76 34 L 76 86 M 81 34 L 81 86 M 86 34 L 86 86
+  " stroke="#92400e" stroke-width="2"/>
+  
+  <!-- Air Flow Arrow Graphics -->
+  <g stroke="#38bdf8" stroke-width="2" fill="none" stroke-linecap="round">
+    <path d="M 52 14 L 60 22 L 68 14"/>
+    <line x1="60" y1="10" x2="60" y2="20"/>
+  </g>
+</svg>

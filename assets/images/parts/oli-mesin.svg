@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="100%" height="100%">
+  <defs>
+    <linearGradient id="oilGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f59e0b" />
+      <stop offset="50%" stop-color="#d97706" />
+      <stop offset="100%" stop-color="#b45309" />
+    </linearGradient>
+    <linearGradient id="bottleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="50%" stop-color="#0284c7" />
+      <stop offset="100%" stop-color="#0369a1" />
+    </linearGradient>
+    <linearGradient id="capGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ef4444" />
+      <stop offset="100%" stop-color="#991b1b" />
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#0284c7" flood-opacity="0.4"/>
+    </filter>
+  </defs>
+  <!-- Background Glow Circle -->
+  <circle cx="60" cy="60" r="54" fill="#0f172a" stroke="rgba(56, 189, 248, 0.2)" stroke-width="2" filter="url(#glow)" />
+  <circle cx="60" cy="60" r="48" fill="rgba(2, 132, 199, 0.08)" />
+
+  <!-- Bottle Cap -->
+  <rect x="50" y="16" width="20" height="10" rx="2" fill="url(#capGrad)" stroke="#f87171" stroke-width="1"/>
+  <rect x="54" y="26" width="12" height="6" fill="#64748b"/>
+
+  <!-- Bottle Body -->
+  <path d="M 44 32 L 76 32 C 84 32 88 38 88 46 L 88 94 C 88 98 84 102 78 102 L 42 102 C 36 102 32 98 32 94 L 32 46 C 32 38 36 32 44 32 Z" fill="url(#bottleGrad)" stroke="#7dd3fc" stroke-width="1.5"/>
+  
+  <!-- Handle Grip (Ergonomic) -->
+  <path d="M 32 48 L 22 56 L 22 82 L 32 88" fill="none" stroke="url(#bottleGrad)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Bottle Label -->
+  <rect x="38" y="52" width="44" height="42" rx="4" fill="#0f172a" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+  
+  <!-- Oil Drop Graphic on Label -->
+  <path d="M 60 58 C 60 58 52 68 52 74 C 52 78.4 55.6 82 60 82 C 64.4 82 68 78.4 68 74 C 68 68 60 58 60 58 Z" fill="url(#oilGrad)" />
+  
+  <!-- Label Text Indicator -->
+  <rect x="44" y="86" width="32" height="4" rx="2" fill="#38bdf8"/>
+</svg>

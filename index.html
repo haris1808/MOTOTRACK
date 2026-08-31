@@ -1,0 +1,1069 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MOTO-TRACK | Tracker Pergantian Part Motor Matic (KM-Based)</title>
+  <meta name="description" content="Aplikasi pemantau jadwal servis dan penggantian sparepart motor matic berbasis kilometer (KM) akurat, lengkap dengan riwayat pengeluaran dan indikator keausan part.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Chart.js for statistics -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Supabase JS Client SDK (CDN) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <link rel="stylesheet" href="styles.css">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0b0f19">
+</head>
+<body>
+  <!-- Background Glow & Grid Effects -->
+  <div class="bg-glow bg-glow-1"></div>
+  <div class="bg-glow bg-glow-2"></div>
+  <div class="grid-overlay"></div>
+
+  <!-- =========================================================================
+       LOGIN SCREEN OVERLAY (AUTHENTICATION GUARD)
+       ========================================================================= -->
+  <div class="login-screen-overlay" id="loginScreen">
+    <div class="login-box-container">
+      <div class="login-brand-header">
+        <div class="login-brand-icon">
+          <i data-lucide="gauge"></i>
+        </div>
+        <h1 class="login-app-title">MOTO<span>TRACK</span></h1>
+        <p class="login-app-subtitle">Sistem Pemantau Part & Perawatan Motor Matic</p>
+      </div>
+
+      <!-- Auth Switcher Tabs -->
+      <div class="auth-tabs">
+        <button type="button" class="auth-tab-btn active" id="tabBtnLogin" data-auth-tab="login">
+          <i data-lucide="log-in"></i> Masuk
+        </button>
+        <button type="button" class="auth-tab-btn" id="tabBtnRegister" data-auth-tab="register">
+          <i data-lucide="user-plus"></i> Daftar Akun
+        </button>
+      </div>
+
+      <!-- Form 1: Login Form -->
+      <form id="loginForm" class="login-form auth-form-pane active">
+        <div class="login-welcome-text">
+          <h3>Silakan Masuk</h3>
+          <p>Masukkan username dan password untuk membuka dashboard Anda.</p>
+        </div>
+
+        <div class="login-error-alert" id="loginErrorAlert" style="display: none;">
+          <i data-lucide="alert-circle"></i>
+          <span id="loginErrorMessage">Username atau password salah!</span>
+        </div>
+
+        <div class="form-group">
+          <label for="loginUsername"><i data-lucide="user" class="inline-icon"></i> Username</label>
+          <input type="text" id="loginUsername" class="form-input" placeholder="Masukkan username..." autocomplete="username" required />
+        </div>
+
+        <div class="form-group">
+          <label for="loginPassword"><i data-lucide="lock" class="inline-icon"></i> Password</label>
+          <div class="input-password-wrapper">
+            <input type="password" id="loginPassword" class="form-input" placeholder="Masukkan password..." autocomplete="current-password" required />
+            <button type="button" class="btn-toggle-password" id="btnTogglePassword" title="Lihat/Sembunyikan Password">
+              <i data-lucide="eye" id="eyeIcon"></i>
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-full btn-login-submit" id="btnLoginSubmit">
+          <i data-lucide="log-in"></i> Masuk ke Dashboard
+        </button>
+      </form>
+
+      <!-- Form 2: Register Form -->
+      <form id="registerForm" class="login-form auth-form-pane" style="display: none;">
+        <div class="login-welcome-text">
+          <h3>Daftar Akun Pengguna</h3>
+          <p>Buat akun baru untuk mengelola motor dan riwayat servis Anda sendiri.</p>
+        </div>
+
+        <div class="login-error-alert" id="registerErrorAlert" style="display: none;">
+          <i data-lucide="alert-circle"></i>
+          <span id="registerErrorMessage">Pendaftaran gagal!</span>
+        </div>
+
+        <div class="form-group">
+          <label for="regFullName"><i data-lucide="user-check" class="inline-icon"></i> Nama Lengkap / Panggilan <span class="req">*</span></label>
+          <input type="text" id="regFullName" class="form-input" placeholder="Contoh: Haris Setiawan" required />
+        </div>
+
+        <div class="form-group">
+          <label for="regUsername"><i data-lucide="at-sign" class="inline-icon"></i> Username <span class="req">*</span></label>
+          <input type="text" id="regUsername" class="form-input" placeholder="Contoh: haris" autocomplete="username" required />
+          <span class="form-hint">Username harus unik (huruf kecil & angka tanpa spasi).</span>
+        </div>
+
+        <div class="form-group">
+          <label for="regPassword"><i data-lucide="lock" class="inline-icon"></i> Password <span class="req">*</span></label>
+          <div class="input-password-wrapper">
+            <input type="password" id="regPassword" class="form-input" placeholder="Minimal 4 karakter..." autocomplete="new-password" required />
+            <button type="button" class="btn-toggle-password" id="btnToggleRegPassword" title="Lihat/Sembunyikan Password">
+              <i data-lucide="eye" id="eyeRegIcon"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="regConfirmPassword"><i data-lucide="shield-check" class="inline-icon"></i> Konfirmasi Password <span class="req">*</span></label>
+          <input type="password" id="regConfirmPassword" class="form-input" placeholder="Ulangi password..." autocomplete="new-password" required />
+        </div>
+
+        <button type="submit" class="btn btn-primary w-full btn-login-submit" id="btnRegisterSubmit">
+          <i data-lucide="user-plus"></i> Daftar & Masuk
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       AUTHENTICATED DASHBOARD APPLICATION
+       ========================================================================= -->
+  <div class="app-wrapper" id="authenticatedApp" style="display: none;">
+    <!-- Header & Navigation -->
+    <header class="app-header">
+      <div class="header-container">
+        <div class="brand-wrapper">
+          <div class="brand-icon">
+            <i data-lucide="gauge"></i>
+          </div>
+          <div class="brand-text">
+            <h1 class="brand-title">MOTO<span>TRACK</span></h1>
+            <p class="brand-tagline">Matic Part Lifecycle & Maintenance Tracker</p>
+          </div>
+        </div>
+
+        <!-- Vehicle Selector, Cloud Status & User Actions -->
+        <div class="header-actions">
+          <!-- Supabase Cloud Status Pill (Only for Admin) -->
+          <div class="cloud-sync-pill offline" id="cloudSyncStatusPill" title="Klik untuk Pengaturan Supabase Cloud" style="display: none;">
+            <span class="sync-dot"></span>
+            <span class="sync-text">Mode Lokal</span>
+          </div>
+
+          <!-- Active User Profile Pill -->
+          <div class="user-profile-pill" id="userProfileTrigger" title="Klik untuk Pengaturan Akun & Profil">
+            <div class="user-avatar-icon">
+              <i data-lucide="user"></i>
+            </div>
+            <div class="user-info-text">
+              <span class="user-name-display" id="headerUserName">Admin</span>
+              <span class="user-role-badge" id="headerUserRoleBadge">Pengguna</span>
+            </div>
+          </div>
+
+          <!-- Vehicle Dropdown Switcher -->
+          <div class="vehicle-selector-wrapper">
+            <div class="select-label">Motor Aktif:</div>
+            <div class="custom-select-trigger" id="activeVehicleTrigger">
+              <i data-lucide="bike" class="veh-icon"></i>
+              <span id="activeVehicleName">Honda Vario 160</span>
+              <i data-lucide="chevron-down" class="dropdown-icon"></i>
+            </div>
+            <div class="vehicle-dropdown-menu" id="vehicleDropdownMenu">
+              <div class="dropdown-header">Pilih / Tambah Motor</div>
+              <div class="vehicle-list" id="vehicleListOptions">
+                <!-- Dynamically Populated -->
+              </div>
+              <div class="dropdown-footer">
+                <button class="btn btn-secondary btn-sm w-full" id="btnOpenAddVehicleModal">
+                  <i data-lucide="plus-circle"></i> Tambah Motor Baru
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Global Action Buttons -->
+          <div class="header-buttons">
+            <!-- Maintenance Reminder Bell with Count Badge -->
+            <button class="btn-icon btn-alert-bell" id="btnHeaderAlertBell" title="Pengingat Perawatan Motor" style="position: relative;">
+              <i data-lucide="bell"></i>
+              <span class="bell-badge-count" id="headerAlertBellBadge" style="display: none;">0</span>
+            </button>
+            <!-- Admin Users Management Button (Only for Admin) -->
+            <button class="btn-icon btn-admin-only" id="btnAdminUsersModal" title="Kelola Pengguna Terdaftar (Admin)" style="display: none;">
+              <i data-lucide="users"></i>
+            </button>
+            <!-- Supabase Database Settings (Only for Admin) -->
+            <button class="btn-icon btn-admin-only" id="btnOpenFirebaseModal" title="Pengaturan Database Supabase (Admin)" style="display: none;">
+              <i data-lucide="cloud"></i>
+            </button>
+            <button class="btn-icon" id="btnExportImportModal" title="Cadangkan / Pulihkan Data">
+              <i data-lucide="hard-drive-download"></i>
+            </button>
+            <button class="btn-icon" id="btnPrintReport" title="Cetak Rekap Servis">
+              <i data-lucide="printer"></i>
+            </button>
+            
+            <!-- User Logout Button -->
+            <button class="btn btn-logout" id="btnLogout" title="Keluar dari Aplikasi">
+              <i data-lucide="log-out"></i>
+              <span class="logout-text">Keluar</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="main-content">
+      
+      <!-- Maintenance Alert Ribbon / Banner (Shown if critical/warning parts exist) -->
+      <div class="maintenance-alert-banner" id="maintenanceAlertBanner" style="display: none;">
+        <div class="alert-banner-content">
+          <div class="alert-banner-icon-pulse" id="alertBannerIconWrapper">
+            <i data-lucide="alert-octagon" id="alertBannerIcon"></i>
+          </div>
+          <div class="alert-banner-text">
+            <h4 id="alertBannerTitle">Pengingat Servis Motor</h4>
+            <p id="alertBannerMessage">Terdapat komponen yang membutuhkan perhatian Anda.</p>
+          </div>
+        </div>
+        <div class="alert-banner-actions">
+          <button type="button" class="btn btn-sm btn-alert-action" id="btnOpenAlertModalFromBanner">
+            <i data-lucide="eye"></i> Rincian Part
+          </button>
+          <button type="button" class="btn-alert-dismiss" id="btnDismissAlertBanner" title="Sembunyikan Pemberitahuan">
+            <i data-lucide="x"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Top Hero Section: Vehicle Overview & Quick Odometer Card -->
+      <section class="hero-card">
+        <div class="hero-vehicle-info">
+          <div class="vehicle-badge-pill" id="vehPlate">B 4821 SIK</div>
+          <h2 class="vehicle-display-name" id="vehFullName">Honda Vario 160 CBS (2023)</h2>
+          <p class="vehicle-meta" id="vehMetaInfo">Kategori: Skutik 160cc • Terakhir Update: Hari Ini</p>
+
+          <!-- Quick Summary Stats Grid -->
+          <div class="quick-summary-grid">
+            <div class="summary-box critical" id="summaryCriticalBox" title="Klik untuk filter part Wajib Ganti">
+              <div class="summary-number" id="countCritical">0</div>
+              <div class="summary-label">Wajib Ganti / Overdue</div>
+            </div>
+            <div class="summary-box warning" id="summaryWarningBox" title="Klik untuk filter part Perhatian">
+              <div class="summary-number" id="countWarning">0</div>
+              <div class="summary-label">Mendekati Servis</div>
+            </div>
+            <div class="summary-box safe" id="summarySafeBox" title="Klik untuk filter part Aman">
+              <div class="summary-number" id="countSafe">0</div>
+              <div class="summary-label">Part Kondisi Aman</div>
+            </div>
+            <div class="summary-box total-cost">
+              <div class="summary-number" id="totalServiceExpense">Rp 0</div>
+              <div class="summary-label">Total Biaya Perawatan</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Odometer Meter Control Card -->
+        <div class="odometer-card">
+          <div class="odometer-card-header">
+            <div class="odo-title-group">
+              <span class="odo-badge">ODOMETER REAL-TIME</span>
+              <h3 class="odo-label">Kilometer Terkini (KM)</h3>
+            </div>
+            <button class="btn-text-edit" id="btnEditOdometer">
+              <i data-lucide="edit-3"></i> Edit KM
+            </button>
+          </div>
+
+          <div class="odometer-display-screen">
+            <div class="odometer-digit-container" id="odometerDigitDisplay">
+              <!-- Digital Counter Display -->
+              <span class="digit">0</span>
+              <span class="digit">2</span>
+              <span class="digit">4</span>
+              <span class="digit">5</span>
+              <span class="digit">8</span>
+              <span class="digit">0</span>
+            </div>
+            <span class="odo-unit">KM</span>
+          </div>
+
+          <!-- Quick KM Increment Buttons -->
+          <div class="odometer-quick-actions">
+            <span class="quick-label">Tambah Cepat:</span>
+            <div class="quick-btn-group">
+              <button class="btn-chip" data-add-km="25">+25 KM</button>
+              <button class="btn-chip" data-add-km="50">+50 KM</button>
+              <button class="btn-chip" data-add-km="100">+100 KM</button>
+              <button class="btn-chip" data-add-km="500">+500 KM</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Navigation Tabs: Tracker Part vs Riwayat Servis vs Analisis Biaya -->
+      <div class="tab-navigation">
+        <div class="tab-buttons">
+          <button class="tab-btn active" data-tab="partsTrackerTab">
+            <i data-lucide="wrench"></i> Pelacak Sparepart (<span id="tabPartCount">0</span>)
+          </button>
+          <button class="tab-btn" data-tab="serviceHistoryTab">
+            <i data-lucide="history"></i> Riwayat & Catatan Servis (<span id="tabHistoryCount">0</span>)
+          </button>
+          <button class="tab-btn" data-tab="expenseStatsTab">
+            <i data-lucide="pie-chart"></i> Statistik Biaya & Analisis
+          </button>
+        </div>
+
+        <!-- Action Button: Add Custom Part -->
+        <div class="tab-side-action">
+          <button class="btn btn-primary" id="btnOpenAddPartModal">
+            <i data-lucide="plus"></i> Tambah Part Kustom
+          </button>
+        </div>
+      </div>
+
+      <!-- ================= TAB 1: SPAREPART TRACKER ================= -->
+      <div class="tab-pane active" id="partsTrackerTab">
+        
+        <!-- Filters and Search Toolbar -->
+        <div class="toolbar-wrapper">
+          <div class="search-box">
+            <i data-lucide="search" class="search-icon"></i>
+            <input type="text" id="partSearchInput" placeholder="Cari nama part (misal: Oli, V-Belt, Busi, Rem)..." />
+            <button class="clear-search-btn" id="btnClearSearch" style="display:none;">
+              <i data-lucide="x"></i>
+            </button>
+          </div>
+
+          <!-- Category & Status Filters -->
+          <div class="filters-row">
+            <div class="filter-group">
+              <span class="filter-title"><i data-lucide="filter"></i> Status:</span>
+              <div class="chip-filter-list" id="statusFilterList">
+                <button class="chip-filter active" data-status-filter="all">Semua</button>
+                <button class="chip-filter filter-danger" data-status-filter="danger">🔴 Wajib Ganti</button>
+                <button class="chip-filter filter-warning" data-status-filter="warning">🟡 Perhatian</button>
+                <button class="chip-filter filter-safe" data-status-filter="safe">🟢 Kondisi Aman</button>
+              </div>
+            </div>
+
+            <div class="filter-group">
+              <span class="filter-title"><i data-lucide="layers"></i> Kategori:</span>
+              <div class="chip-filter-list" id="categoryFilterList">
+                <button class="chip-filter active" data-category-filter="all">Semua Kategori</button>
+                <button class="chip-filter" data-category-filter="mesin">Mesin & Pelumas</button>
+                <button class="chip-filter" data-category-filter="cvt">CVT & Transmisi</button>
+                <button class="chip-filter" data-category-filter="pengereman">Pengereman</button>
+                <button class="chip-filter" data-category-filter="radiator">Pendingin & Listrik</button>
+                <button class="chip-filter" data-category-filter="kaki">Kaki-kaki & Ban</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Parts Card Grid Container -->
+        <div class="parts-grid-container" id="partsGrid">
+          <!-- Rendered dynamically by app.js -->
+        </div>
+
+        <!-- Empty State for Parts Grid -->
+        <div class="empty-state" id="emptyPartsState" style="display: none;">
+          <div class="empty-icon"><i data-lucide="package-open"></i></div>
+          <h3>Tidak ada sparepart yang sesuai filter</h3>
+          <p>Coba ganti filter status/kategori atau gunakan kata kunci pencarian yang lain.</p>
+          <button class="btn btn-secondary mt-3" id="btnResetFilters">Reset Filter</button>
+        </div>
+
+      </div>
+
+      <!-- ================= TAB 2: RIWAYAT SERVIS ================= -->
+      <div class="tab-pane" id="serviceHistoryTab">
+        <div class="history-header-card">
+          <div class="history-title-desc">
+            <h3>Log Riwayat Pergantian & Servis Berkala</h3>
+            <p>Catatan mendalam tanggal pergantian, jarak KM saat servis, biaya, merek part, dan bengkel rujukan.</p>
+          </div>
+          <div class="history-actions">
+            <button class="btn btn-primary btn-sm" id="btnOpenManualLogModal">
+              <i data-lucide="clipboard-pen"></i> Catat Servis Manual
+            </button>
+          </div>
+        </div>
+
+        <!-- History Table / Card Feed -->
+        <div class="history-list-wrapper" id="historyListContainer">
+          <!-- Rendered dynamically -->
+        </div>
+
+        <!-- Empty State for History -->
+        <div class="empty-state" id="emptyHistoryState" style="display: none;">
+          <div class="empty-icon"><i data-lucide="clipboard-list"></i></div>
+          <h3>Belum Ada Riwayat Servis</h3>
+          <p>Ketika Anda mengklik tombol "Tandai Telah Diganti" pada kartu part, atau mencatat servis manual, riwayat akan otomatis tersimpan di sini.</p>
+        </div>
+      </div>
+
+      <!-- ================= TAB 3: STATISTIK & BIAYA ================= -->
+      <div class="tab-pane" id="expenseStatsTab">
+        <div class="stats-overview-grid">
+          <div class="stat-card">
+            <div class="stat-icon-wrapper blue">
+              <i data-lucide="wallet"></i>
+            </div>
+            <div class="stat-info">
+              <span class="stat-title">Total Pengeluaran Servis</span>
+              <h3 class="stat-value" id="statsTotalCost">Rp 0</h3>
+              <span class="stat-subtitle" id="statsServiceCount">Dari 0 kali transaksi</span>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon-wrapper orange">
+              <i data-lucide="trending-up"></i>
+            </div>
+            <div class="stat-info">
+              <span class="stat-title">Rata-rata Biaya Servis</span>
+              <h3 class="stat-value" id="statsAvgCost">Rp 0</h3>
+              <span class="stat-subtitle">Per kali pergantian part</span>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon-wrapper green">
+              <i data-lucide="shield-check"></i>
+            </div>
+            <div class="stat-info">
+              <span class="stat-title">Tingkat Kesehatan Motor</span>
+              <h3 class="stat-value" id="statsHealthScore">100%</h3>
+              <span class="stat-subtitle" id="statsHealthText">Kondisi Sangat Prima</span>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon-wrapper purple">
+              <i data-lucide="calendar"></i>
+            </div>
+            <div class="stat-info">
+              <span class="stat-title">Servis Terakhir Dilakukan</span>
+              <h3 class="stat-value" id="statsLastServiceDate">-</h3>
+              <span class="stat-subtitle" id="statsLastServicePart">-</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="charts-row">
+          <div class="chart-card">
+            <div class="chart-header">
+              <h4><i data-lucide="bar-chart-2"></i> Proporsi Pengeluaran per Kategori</h4>
+            </div>
+            <div class="chart-body">
+              <canvas id="categoryExpenseChart" height="260"></canvas>
+            </div>
+          </div>
+
+          <div class="chart-card">
+            <div class="chart-header">
+              <h4><i data-lucide="activity"></i> Part Paling Sering Diganti</h4>
+            </div>
+            <div class="chart-body" id="frequentPartsList">
+              <!-- Dynamically populated list -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <div class="footer-content">
+        <p><strong>MOTO-TRACK</strong> — Aplikasi Pemantau Usia Part & Servis Motor Matic Berdasarkan Kilometer.</p>
+        <p class="text-muted text-xs">Selalu periksa kondisi fisik sparepart secara berkala di bengkel resmi / terpercaya.</p>
+      </div>
+    </footer>
+  </div>
+
+  <!-- =========================================================================
+       MODALS
+       ========================================================================= -->
+
+  <!-- Modal: Supabase Settings -->
+  <div class="modal-backdrop" id="firebaseSettingsModal">
+    <div class="modal-container">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <div class="modal-badge-icon">
+            <i data-lucide="cloud"></i>
+          </div>
+          <div>
+            <h3 class="modal-title">Pengaturan Database Supabase</h3>
+            <p class="modal-subtitle">Hubungkan database cloud Supabase agar data tersimpan & tersinkron online</p>
+          </div>
+        </div>
+        <button class="modal-close-btn" data-close-modal="firebaseSettingsModal">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+
+      <form id="firebaseSettingsForm" class="modal-body">
+        <p class="text-muted text-xs mb-3">
+          Masukkan konfigurasi proyek Supabase Anda dari <strong>Supabase Dashboard > Settings > API</strong>.
+        </p>
+
+        <div class="form-group">
+          <label for="supabaseUrl">Project URL <span class="req">*</span></label>
+          <input type="url" id="supabaseUrl" class="form-input font-mono text-xs" placeholder="https://xxxxx.supabase.co" required />
+          <span class="form-hint">URL project dari Supabase Dashboard > Settings > API > Project URL</span>
+        </div>
+
+        <div class="form-group">
+          <label for="supabaseAnonKey">Anon / Public Key <span class="req">*</span></label>
+          <input type="text" id="supabaseAnonKey" class="form-input font-mono text-xs" placeholder="eyJhbGciOiJIUzI1NiIs..." required />
+          <span class="form-hint">anon public key dari Supabase Dashboard > Settings > API > Project API keys</span>
+        </div>
+
+        <div class="modal-alert-box">
+          <i data-lucide="shield-check"></i>
+          <span>Jika belum menghubungkan Supabase, sistem tetap bekerja normal dalam <strong>Mode Lokal Offline</strong>.</span>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-close-modal="firebaseSettingsModal">Batal</button>
+          <button type="submit" class="btn btn-primary">
+            <i data-lucide="save"></i> Simpan & Hubungkan Supabase
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 1: Tandai Telah Diganti / Log Servis Part -->
+  <div class="modal-backdrop" id="serviceLogModal">
+    <div class="modal-container">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <div class="modal-badge-icon" id="modalServicePartIcon">
+            <i data-lucide="droplet"></i>
+          </div>
+          <div>
+            <h3 class="modal-title" id="modalServicePartName">Ganti Oli Mesin</h3>
+            <p class="modal-subtitle">Reset interval KM dan simpan catatan servis ke riwayat</p>
+          </div>
+        </div>
+        <button class="modal-close-btn" data-close-modal="serviceLogModal">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+
+      <form id="serviceLogForm" class="modal-body">
+        <input type="hidden" id="logPartId" />
+
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label for="logDate">Tanggal Penggantian / Servis <span class="req">*</span></label>
+            <input type="date" id="logDate" class="form-input" required />
+          </div>
+          <div class="form-group flex-1">
+            <label for="logOdometer">Kilometer Saat Ganti (KM) <span class="req">*</span></label>
+            <input type="number" id="logOdometer" class="form-input font-mono" placeholder="24500" required />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label for="logPartBrand">Merek / Tipe Sparepart yang Dipasang</label>
+            <input type="text" id="logPartBrand" class="form-input" placeholder="Contoh: AHM Oil MPX2 10W-30 / Motul Scooter Expert" />
+          </div>
+          <div class="form-group flex-1">
+            <label for="logShopName">Nama Bengkel / Lokasi</label>
+            <input type="text" id="logShopName" class="form-input" placeholder="Contoh: AHASS / Bengkel Langganan / Servis Sendiri" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label for="logPartPrice">Harga Sparepart (Rp)</label>
+            <input type="number" id="logPartPrice" class="form-input font-mono" placeholder="Contoh: 65000" />
+          </div>
+          <div class="form-group flex-1">
+            <label for="logLaborFee">Ongkos Pasang / Jasa Mekanik (Rp)</label>
+            <input type="number" id="logLaborFee" class="form-input font-mono" placeholder="Contoh: 15000" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="logNotes">Catatan Tambahan (Opsional)</label>
+          <textarea id="logNotes" class="form-textarea" rows="2" placeholder="Contoh: Kondisi oli lama sudah hitam pekat, baut pembuangan oli sudah diganti ring baru."></textarea>
+        </div>
+
+        <div class="modal-alert-box">
+          <i data-lucide="info"></i>
+          <span>Menyimpan servis ini akan memperbarui status part menjadi <strong>100% Baru / Aman</strong> di KM yang Anda masukkan.</span>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-close-modal="serviceLogModal">Batal</button>
+          <button type="submit" class="btn btn-primary">
+            <i data-lucide="check-circle-2"></i> Simpan & Reset Part
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 2: Edit Odometer KM Motor -->
+  <div class="modal-backdrop" id="editOdometerModal">
+    <div class="modal-container modal-sm">
+      <div class="modal-header">
+        <h3 class="modal-title"><i data-lucide="gauge"></i> Update Kilometer Terkini</h3>
+        <button class="modal-close-btn" data-close-modal="editOdometerModal"><i data-lucide="x"></i></button>
+      </div>
+      <form id="editOdometerForm" class="modal-body">
+        <div class="form-group">
+          <label for="inputNewOdometer">Angka Odometer Speedometer Saat Ini (KM)</label>
+          <div class="input-with-unit">
+            <input type="number" id="inputNewOdometer" class="form-input font-mono text-xl" min="0" required />
+            <span class="input-unit">KM</span>
+          </div>
+          <span class="form-hint">Masukkan angka kilometer yang tertera di speedometer motor Anda sekarang.</span>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-close-modal="editOdometerModal">Batal</button>
+          <button type="submit" class="btn btn-primary">Simpan Odometer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 3: Tambah / Edit Part Kustom -->
+  <div class="modal-backdrop" id="partFormModal">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3 class="modal-title" id="partModalTitle"><i data-lucide="plus-circle"></i> Tambah Sparepart Baru</h3>
+        <button class="modal-close-btn" data-close-modal="partFormModal"><i data-lucide="x"></i></button>
+      </div>
+
+      <form id="partForm" class="modal-body">
+        <input type="hidden" id="editPartId" />
+
+        <div class="form-row">
+          <div class="form-group flex-2">
+            <label for="partName">Nama Sparepart <span class="req">*</span></label>
+            <input type="text" id="partName" class="form-input" placeholder="Contoh: Grease CVT / Kanvas Ganda / Aki GTZ6V" required />
+          </div>
+          <div class="form-group flex-1">
+            <label for="partCategory">Kategori <span class="req">*</span></label>
+            <select id="partCategory" class="form-select" required>
+              <option value="mesin">Mesin & Pelumas</option>
+              <option value="cvt">CVT & Transmisi</option>
+              <option value="pengereman">Pengereman</option>
+              <option value="radiator">Pendingin & Listrik</option>
+              <option value="kaki">Kaki-kaki & Ban</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label for="partIntervalKm">Interval Penggantian (Setiap ... KM) <span class="req">*</span></label>
+            <div class="input-with-unit">
+              <input type="number" id="partIntervalKm" class="form-input font-mono" min="100" placeholder="10000" required />
+              <span class="input-unit">KM</span>
+            </div>
+            <span class="form-hint">Jarak tempuh maksimal sebelum part wajib diganti.</span>
+          </div>
+
+          <div class="form-group flex-1">
+            <label for="partLastReplacedKm">Terakhir Diganti di KM Berapa? <span class="req">*</span></label>
+            <div class="input-with-unit">
+              <input type="number" id="partLastReplacedKm" class="form-input font-mono" min="0" placeholder="20000" required />
+              <span class="input-unit">KM</span>
+            </div>
+            <span class="form-hint">Isi KM saat part ini terakhir dipasang/diservis.</span>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label for="partIcon">Ikon Representasi</label>
+            <select id="partIcon" class="form-select">
+              <option value="droplet">💧 Pelumas / Cairan</option>
+              <option value="disc">💿 Rem / Cakram</option>
+              <option value="cog">⚙️ CVT / Gear / Roller</option>
+              <option value="zap">⚡ Busi / Kelistrikan / Aki</option>
+              <option value="wind">💨 Filter Udara / Udara</option>
+              <option value="circle-dot">🔘 Ban / Roda</option>
+              <option value="thermometer">🌡️ Radiator Coolant</option>
+              <option value="wrench">🔧 Mekanikal / Lainnya</option>
+            </select>
+          </div>
+
+          <div class="form-group flex-1">
+            <label for="partEstPrice">Estimasi Harga Part (Rp)</label>
+            <input type="number" id="partEstPrice" class="form-input font-mono" placeholder="Contoh: 120000" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="partImageUrl">Gambar Ilustrasi Sparepart</label>
+          <select id="partImageUrl" class="form-select">
+            <option value="">Otomatis Sesuai Nama Part</option>
+            <option value="assets/images/parts/oli-mesin.svg">🛢️ Oli Mesin (Engine Oil)</option>
+            <option value="assets/images/parts/oli-gardan.svg">🧴 Oli Gardan / Final Gear</option>
+            <option value="assets/images/parts/busi.svg">⚡ Busi (Spark Plug)</option>
+            <option value="assets/images/parts/filter-udara.svg">💨 Filter Udara</option>
+            <option value="assets/images/parts/v-belt.svg">🔄 V-Belt CVT</option>
+            <option value="assets/images/parts/roller-cvt.svg">⚙️ Roller CVT</option>
+            <option value="assets/images/parts/kampas-ganda.svg">🥏 Kampas Kopling Ganda</option>
+            <option value="assets/images/parts/kampas-rem-depan.svg">🛑 Kampas Rem Depan (Cakram)</option>
+            <option value="assets/images/parts/kampas-rem-belakang.svg">🛑 Kampas Rem Belakang (Tromol)</option>
+            <option value="assets/images/parts/minyak-rem.svg">💧 Minyak Rem (DOT 4)</option>
+            <option value="assets/images/parts/radiator-coolant.svg">❄️ Air Radiator / Coolant</option>
+            <option value="assets/images/parts/ban-motor.svg">🔘 Ban Depan / Belakang</option>
+            <option value="assets/images/parts/aki-motor.svg">🔋 Aki / Baterai MF</option>
+            <option value="assets/images/parts/cvt-grease.svg">🧪 Gemuk / Grease CVT</option>
+            <option value="assets/images/parts/default-part.svg">🔧 Sparepart Umum</option>
+          </select>
+          <span class="form-hint">Pilih gambar visual komponen untuk mempercantik kartu tracker.</span>
+        </div>
+
+        <div class="form-group">
+          <label for="partDescription">Deskripsi Singkat / Rekomendasi Part</label>
+          <input type="text" id="partDescription" class="form-input" placeholder="Contoh: Gunakan standar pabrikan atau setara OEM" />
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-close-modal="partFormModal">Batal</button>
+          <button type="submit" class="btn btn-primary" id="btnSavePart">Simpan Sparepart</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 4: Tambah / Edit Kendaraan Motor -->
+  <div class="modal-backdrop" id="vehicleModal">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3 class="modal-title" id="vehicleModalTitle"><i data-lucide="bike"></i> Tambah Motor Matic</h3>
+        <button class="modal-close-btn" data-close-modal="vehicleModal"><i data-lucide="x"></i></button>
+      </div>
+
+      <form id="vehicleForm" class="modal-body">
+        <input type="hidden" id="editVehicleId" />
+
+        <div class="form-row">
+          <div class="form-group flex-2">
+            <label for="vehName">Nama / Model Motor <span class="req">*</span></label>
+            <input type="text" id="vehName" class="form-input" placeholder="Contoh: Honda Beat Deluxe / Yamaha NMAX 155" required />
+          </div>
+          <div class="form-group flex-1">
+            <label for="vehYear">Tahun Pembuatan <span class="req">*</span></label>
+            <input type="number" id="vehYear" class="form-input" placeholder="2023" min="1990" max="2035" required />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label for="vehPlateInput">Nomor Polisi / Plat Motor</label>
+            <input type="text" id="vehPlateInput" class="form-input text-uppercase" placeholder="Contoh: B 1234 ABC" />
+          </div>
+          <div class="form-group flex-1">
+            <label for="vehCurrentOdoInput">Kilometer (KM) Saat Ini <span class="req">*</span></label>
+            <div class="input-with-unit">
+              <input type="number" id="vehCurrentOdoInput" class="form-input font-mono" min="0" placeholder="15000" required />
+              <span class="input-unit">KM</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group" id="vehPresetGroup">
+          <label for="vehPresetType">Preset Daftar Sparepart Awal</label>
+          <select id="vehPresetType" class="form-select">
+            <option value="standard_matic">Standar Motor Matic Lengkap (13 Part Otomatis Terpasang)</option>
+            <option value="empty">Kosong (Saya ingin atur part sendiri satu-persatu)</option>
+          </select>
+          <span class="form-hint">Preset standar otomatis menyediakan interval oli, CVT, filter, busi, rem, radiator, dll.</span>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-close-modal="vehicleModal">Batal</button>
+          <button type="submit" class="btn btn-primary" id="btnSaveVehicle">Simpan Motor</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 5: Export / Import / Reset Data -->
+  <div class="modal-backdrop" id="dataBackupModal">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3 class="modal-title"><i data-lucide="database"></i> Manajemen Data & Backup</h3>
+        <button class="modal-close-btn" data-close-modal="dataBackupModal"><i data-lucide="x"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="backup-section-card">
+          <div class="backup-info">
+            <h4><i data-lucide="download"></i> Ekspor Cadangan Data (JSON)</h4>
+            <p>Download semua data motor, part, dan histori pengeluaran ke file JSON di komputer / HP Anda.</p>
+          </div>
+          <button class="btn btn-secondary btn-sm" id="btnExportJson">
+            <i data-lucide="download"></i> Unduh File JSON
+          </button>
+        </div>
+
+        <div class="backup-section-card mt-3">
+          <div class="backup-info">
+            <h4><i data-lucide="upload"></i> Pulihkan Data dari File JSON</h4>
+            <p>Unggah file cadangan JSON untuk mengembalikan data motor dan riwayat sebelumnya.</p>
+          </div>
+          <input type="file" id="importJsonFileInput" accept=".json" style="display: none;" />
+          <button class="btn btn-secondary btn-sm" id="btnTriggerImportJson">
+            <i data-lucide="upload"></i> Pilih File Cadangan
+          </button>
+        </div>
+
+        <div class="backup-section-card danger-card mt-3">
+          <div class="backup-info">
+            <h4><i data-lucide="alert-triangle"></i> Muat Data Contoh / Reset</h4>
+            <p>Muat ulang data contoh motor matic (Vario 160 & NMAX) atau bersihkan semua data.</p>
+          </div>
+          <div class="flex gap-2">
+            <button class="btn btn-secondary btn-sm" id="btnLoadDemoData">Muat Demo</button>
+            <button class="btn btn-danger btn-sm" id="btnResetAllData">Hapus Semua Data</button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-close-modal="dataBackupModal">Tutup</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 6: Profil Pengguna & Ganti Password -->
+  <div class="modal-backdrop" id="userProfileModal">
+    <div class="modal-container modal-sm">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <div class="modal-badge-icon">
+            <i data-lucide="user-cog"></i>
+          </div>
+          <div>
+            <h3 class="modal-title">Pengaturan Akun & Profil</h3>
+            <p class="modal-subtitle">Kelola nama pengguna dan kata sandi Anda</p>
+          </div>
+        </div>
+        <button class="modal-close-btn" data-close-modal="userProfileModal"><i data-lucide="x"></i></button>
+      </div>
+
+      <form id="userProfileForm" class="modal-body">
+        <div class="form-group">
+          <label for="profileFullName"><i data-lucide="user" class="inline-icon"></i> Nama Lengkap / Panggilan <span class="req">*</span></label>
+          <input type="text" id="profileFullName" class="form-input" required />
+        </div>
+
+        <div class="form-group">
+          <label for="profileUsername"><i data-lucide="at-sign" class="inline-icon"></i> Username</label>
+          <input type="text" id="profileUsername" class="form-input" disabled style="opacity: 0.7; cursor: not-allowed;" />
+          <span class="form-hint">Username akun unik dan tidak dapat diubah.</span>
+        </div>
+
+        <div class="divider-line my-1" style="border-top: 1px dashed var(--border-subtle); margin: 0.5rem 0;"></div>
+
+        <div class="form-group-title" style="font-size: 0.8rem; font-weight: 700; color: var(--primary-cyan); display: flex; align-items: center; gap: 0.35rem;">
+          <i data-lucide="key" style="width: 14px; height: 14px;"></i> Ganti Password (Opsional)
+        </div>
+
+        <div class="form-group">
+          <label for="profileOldPassword">Password Saat Ini</label>
+          <input type="password" id="profileOldPassword" class="form-input" placeholder="Masukkan password lama..." autocomplete="current-password" />
+        </div>
+
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label for="profileNewPassword">Password Baru</label>
+            <input type="password" id="profileNewPassword" class="form-input" placeholder="Password baru..." autocomplete="new-password" />
+          </div>
+          <div class="form-group flex-1">
+            <label for="profileConfirmNewPassword">Konfirmasi Password</label>
+            <input type="password" id="profileConfirmNewPassword" class="form-input" placeholder="Ulangi..." autocomplete="new-password" />
+          </div>
+        </div>
+
+        <div class="modal-footer" style="padding-left: 0; padding-right: 0; padding-bottom: 0;">
+          <button type="button" class="btn btn-secondary" data-close-modal="userProfileModal">Batal</button>
+          <button type="submit" class="btn btn-primary">
+            <i data-lucide="save"></i> Simpan Perubahan
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 7: Manajemen Pengguna & Akun (Khusus Admin) -->
+  <div class="modal-backdrop" id="adminUsersModal">
+    <div class="modal-container modal-lg">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <div class="modal-badge-icon" style="background: rgba(168, 85, 247, 0.15); color: #c084fc;">
+            <i data-lucide="shield-check"></i>
+          </div>
+          <div>
+            <h3 class="modal-title">Manajemen Pengguna Terdaftar</h3>
+            <p class="modal-subtitle">Daftar semua akun pengguna, jumlah motor, dan kontrol akses</p>
+          </div>
+        </div>
+        <button class="modal-close-btn" data-close-modal="adminUsersModal"><i data-lucide="x"></i></button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Summary Stats Cards -->
+        <div class="admin-stats-grid">
+          <div class="admin-stat-card">
+            <div class="admin-stat-icon"><i data-lucide="users"></i></div>
+            <div class="admin-stat-info">
+              <span class="admin-stat-value" id="adminTotalUsers">0</span>
+              <span class="admin-stat-label">Total Akun Pengguna</span>
+            </div>
+          </div>
+          <div class="admin-stat-card">
+            <div class="admin-stat-icon"><i data-lucide="bike"></i></div>
+            <div class="admin-stat-info">
+              <span class="admin-stat-value" id="adminTotalVehicles">0</span>
+              <span class="admin-stat-label">Total Motor Terdaftar</span>
+            </div>
+          </div>
+          <div class="admin-stat-card">
+            <div class="admin-stat-icon"><i data-lucide="clipboard-list"></i></div>
+            <div class="admin-stat-info">
+              <span class="admin-stat-value" id="adminTotalLogs">0</span>
+              <span class="admin-stat-label">Total Riwayat Servis</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="admin-search-wrapper my-3">
+          <div class="search-input-group">
+            <i data-lucide="search" class="search-icon"></i>
+            <input type="text" id="adminSearchUserInput" class="form-input" placeholder="Cari nama pengguna atau username..." />
+          </div>
+        </div>
+
+        <!-- User List Table Container -->
+        <div class="admin-users-table-container">
+          <table class="admin-users-table">
+            <thead>
+              <tr>
+                <th>Pengguna</th>
+                <th>Username</th>
+                <th>Tgl Terdaftar</th>
+                <th>Motor</th>
+                <th>Servis</th>
+                <th>Role</th>
+                <th>Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="adminUsersTableBody">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-close-modal="adminUsersModal">Tutup</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 8: Pengingat Servis & Part Wajib Ganti / Perhatian (Auto Reminder) -->
+  <div class="modal-backdrop" id="maintenanceAlertModal">
+    <div class="modal-container modal-lg">
+      <div class="modal-header modal-header-alert" id="maintenanceAlertModalHeader">
+        <div class="modal-title-group">
+          <div class="modal-badge-icon pulse-alert-icon" id="alertModalBadgeIcon">
+            <i data-lucide="alert-octagon"></i>
+          </div>
+          <div>
+            <h3 class="modal-title" id="alertModalTitle">Pemberitahuan Servis Motor</h3>
+            <p class="modal-subtitle" id="alertModalSubtitle">Komponen yang memerlukan penggantian atau pemeriksaan segera</p>
+          </div>
+        </div>
+        <button class="modal-close-btn" data-close-modal="maintenanceAlertModal"><i data-lucide="x"></i></button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Alert Highlight Summary Chips -->
+        <div class="alert-summary-chips">
+          <div class="alert-chip chip-critical" id="alertChipCritical">
+            <i data-lucide="alert-circle"></i>
+            <span id="alertCriticalCountText">0 Part Wajib Ganti</span>
+          </div>
+          <div class="alert-chip chip-warning" id="alertChipWarning">
+            <i data-lucide="alert-triangle"></i>
+            <span id="alertWarningCountText">0 Part Perhatian</span>
+          </div>
+          <div class="alert-vehicle-tag" id="alertVehicleTag">
+            <i data-lucide="bike"></i>
+            <span id="alertVehicleNameDisplay">Honda Vario 160</span>
+          </div>
+        </div>
+
+        <!-- Scrollable Urgent Parts List -->
+        <div class="alert-parts-list" id="alertPartsListContainer">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-close-modal="maintenanceAlertModal">Tutup Pengingat</button>
+        <button type="button" class="btn btn-primary" id="btnFilterUrgentParts">
+          <i data-lucide="filter"></i> Lihat di Tabel Tracker
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Konfirmasi Hapus & Aksi Bahaya (Custom Animated Dialog) -->
+  <div class="modal-backdrop confirm-backdrop" id="confirmModal">
+    <div class="modal-container confirm-modal-container">
+      <div class="confirm-modal-body">
+        <div class="confirm-icon-wrapper danger" id="confirmIconWrapper">
+          <div class="confirm-icon-pulse"></div>
+          <i data-lucide="trash-2" id="confirmIcon"></i>
+        </div>
+        <h3 class="confirm-title" id="confirmTitle">Konfirmasi Hapus</h3>
+        <p class="confirm-message" id="confirmMessage">Apakah Anda yakin ingin menghapus data ini?</p>
+      </div>
+      <div class="confirm-modal-footer">
+        <button type="button" class="btn btn-secondary confirm-btn-cancel" id="btnConfirmCancel">
+          <i data-lucide="x"></i> Batal
+        </button>
+        <button type="button" class="btn btn-danger confirm-btn-proceed" id="btnConfirmProceed">
+          <i data-lucide="trash-2"></i> Hapus Data
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Print Template Area (Hidden on screen, visible during window.print()) -->
+  <div id="printArea" class="print-only">
+    <!-- Populated dynamically when print is triggered -->
+  </div>
+
+  <!-- Toast Notification System -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- App Scripts -->
+  <script src="supabase-config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

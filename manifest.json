@@ -1,0 +1,13 @@
+{
+  "name": "MOTO-TRACK - Tracker Pergantian Part Motor Matic",
+  "short_name": "MotoTrack",
+  "description": "Aplikasi pemantau jadwal servis dan penggantian sparepart motor matic berbasis kilometer (KM) akurat.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0a0e1a",
+  "theme_color": "#0a0e1a",
+  "categories": ["utilities", "lifestyle"],
+  "lang": "id",
+  "icons": []
+}
