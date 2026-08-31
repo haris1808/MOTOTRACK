@@ -1,214 +1,164 @@
 # Panduan Penggunaan & Deployment -- MOTO-TRACK
 
-MOTO-TRACK adalah aplikasi web SPA (Single Page Application) untuk memantau jadwal servis motor matic berbasis kilometer. Aplikasi terdiri dari satu file HTML utama beserta file CSS dan JavaScript pendukung, dan dapat berjalan sepenuhnya secara offline menggunakan localStorage maupun tersinkronisasi ke cloud melalui Supabase.
+MOTO-TRACK adalah aplikasi web SPA (Single Page Application) modern untuk memantau jadwal servis dan penggantian sparepart motor matic berbasis kilometer (KM). Aplikasi terdiri dari file statis (HTML, CSS, JavaScript) yang dapat berjalan sepenuhnya secara offline (menggunakan `localStorage`) maupun tersinkronisasi online ke cloud database melalui **Supabase**.
 
 ---
 
 ## 1. Persyaratan Sistem
 
 - Browser modern dengan dukungan ES6+:
-  - Google Chrome 90 atau lebih baru
-  - Mozilla Firefox 88 atau lebih baru
-  - Apple Safari 14 atau lebih baru
-  - Microsoft Edge 90 atau lebih baru
-- Tidak perlu menginstall runtime apapun (Node.js, npm, dan sejenisnya **tidak diperlukan**).
-- Koneksi internet **hanya diperlukan** jika ingin menggunakan fitur sinkronisasi Supabase cloud.
+  - Google Chrome 90+
+  - Mozilla Firefox 88+
+  - Apple Safari 14+
+  - Microsoft Edge 90+
+  - Browser Mobile (Android Chrome / iOS Safari)
+- Runtime khusus seperti Node.js / npm **tidak wajib** untuk menjalankan aplikasi karena merupakan web statis client-side murni.
+- Koneksi internet diperlukan jika menggunakan fitur sinkronisasi Supabase cloud.
 
 ---
 
-## 2. Cara Menjalankan Aplikasi
-
-Ada tiga cara untuk menjalankan aplikasi ini.
+## 2. Cara Menjalankan Aplikasi Secara Lokal
 
 ### Cara 1: Buka Langsung di Browser
-
-Cukup buka file `index.html` dengan double-click. Browser default akan membuka aplikasi secara langsung. Cara ini paling sederhana dan tidak memerlukan tool tambahan.
+Cukup buka file `index.html` dengan double-click atau drag ke browser.
 
 ### Cara 2: Live Server (VS Code)
-
-Untuk development dengan fitur auto-reload:
-
-1. Install extension **Live Server** di VS Code.
-2. Buka folder `motor-reminder` di VS Code.
+1. Install ekstensi **Live Server** di VS Code.
+2. Buka folder proyek `MOTOTRACK` di VS Code.
 3. Klik kanan pada `index.html`, pilih **Open with Live Server**.
 4. Browser akan terbuka otomatis di `http://127.0.0.1:5500`.
 
 ### Cara 3: Python HTTP Server
-
-Jika Python sudah terinstall di sistem:
-
 ```bash
-cd motor-reminder
 python -m http.server 8080
 ```
-
-Kemudian buka `http://localhost:8080` di browser.
-
----
-
-## 3. Login ke Aplikasi
-
-1. Buka aplikasi -- layar login akan muncul secara otomatis.
-2. Masukkan kredensial default:
-   - **Username:** `admin`
-   - **Password:** `admin354313`
-3. Klik tombol **Masuk ke Dashboard**.
-4. Sesi login disimpan di `sessionStorage`. Sesi akan otomatis hilang saat tab atau browser ditutup.
+Buka `http://localhost:8080` di browser.
 
 ---
 
-## 4. Setup Supabase (Khusus Admin)
+## 3. Login & Manajemen Akun
 
-Supabase digunakan sebagai backend cloud agar data tersimpan di database PostgreSQL terpusat. Untuk menjaga privasi dan keamanan kredensial database, **tombol pengaturan Supabase dan status Cloud hanya dapat dilihat serta diakses oleh akun Admin (`admin`)**. Pengguna biasa tidak akan melihat tombol database maupun status cloud ini.
+### Akun Administrator Bawaan:
+- **Username:** `admin`
+- **Password:** `admin354313`
 
-Langkah-langkah setup:
-
-1. Login menggunakan akun **Admin** (`admin`).
-2. Buka [https://supabase.com](https://supabase.com) dan buat akun/project baru (Region: Singapore).
-3. Buka menu **SQL Editor** di dashboard Supabase, lalu jalankan seluruh isi file `supabase-schema.sql`.
-4. Buka menu **Settings > API**, salin **Project URL** dan **anon public key**.
-5. Di aplikasi MOTO-TRACK, klik ikon **Cloud** di header (atau klik status pill Cloud).
-6. Masukkan **Supabase URL** dan **Anon Key**, lalu klik **Simpan & Hubungkan**.
-7. Jika koneksi berhasil, status pill di header admin akan berubah hijau (**Cloud Terhubung**).
+### Fitur Registrasi & Pengguna Baru:
+- Pengguna baru dapat mendaftar melalui tab **Daftar Akun Baru** di halaman awal.
+- Setiap pengguna memiliki ruang data motor dan riwayat servis terisolasi.
+- Pengguna dapat memperbarui nama lengkap dan password melalui menu **Edit Profil**.
+- Administrator memiliki akses ke menu **Kelola Pengguna** untuk melihat statistik seluruh akun, mereset password pengguna, atau menghapus akun.
 
 ---
 
-## 5. Panduan Penggunaan per Fitur
+## 4. Setup Database Supabase & Deployment ke Vercel
+
+Agar data tersimpan permanen di cloud dan tersinkronisasi di semua perangkat (termasuk saat dibuka dari link Vercel), ikuti langkah berikut:
+
+### Langkah A: Setup Project & Database di Supabase
+1. Buka [https://supabase.com](https://supabase.com) dan buat akun/login.
+2. Klik **New Project**, beri nama project (misal `mototrack-db`), buat database password yang aman, dan pilih Region terdekat (misal `Singapore`).
+3. Tunggu hingga project Supabase selesai dibuat (1-2 menit).
+4. Buka menu **SQL Editor** pada sidebar kiri Supabase dashboard.
+5. Klik **New Query**, lalu salin seluruh isi file `supabase-schema.sql` dan tempelkan ke SQL Editor.
+6. Klik tombol **Run** (Ctrl+Enter). Pastikan muncul pesan `Success. No rows returned`.
+   > SQL ini membuat tabel `users`, `vehicles`, `parts`, `service_logs`, relasi Foreign Key dengan `ON DELETE CASCADE`, serta Row Level Security (RLS) policies agar proses CRUD (termasuk DELETE) tersinkron dengan lancar.
+7. Buka menu **Project Settings > API**.
+8. Salin 2 nilai penting:
+   - **Project URL** (contoh: `https://abcdefghijkl.supabase.co`)
+   - **Project API Keys (`anon` / `public`)** (contoh: `eyJhbGciOiJIUzI1NiIsIn...`)
+
+### Langkah B: Hubungkan Supabase di Aplikasi MOTO-TRACK
+1. Buka aplikasi MOTO-TRACK (lokal maupun di URL Vercel).
+2. Login menggunakan akun **Admin** (`admin`).
+3. Klik ikon **Database/Cloud** di header (atau klik status pill **Mode Lokal**).
+4. Masukkan **Project URL** dan **Anon Key** yang sudah disalin dari Supabase.
+5. Klik **Simpan & Hubungkan Supabase**.
+6. Jika berhasil, status pill di header akan berubah hijau menjadi **Cloud Terhubung**.
+7. Data lokal Anda akan otomatis tersinkronisasi ke cloud database Supabase.
+
+*(Opsional)* Anda juga dapat mengisi `DEFAULT_CONFIG` pada file `supabase-config.js` dengan URL dan Anon Key agar aplikasi langsung terhubung ke Supabase secara otomatis saat pertama kali dibuka di hosting Vercel.
+
+---
+
+## 5. Deployment dari GitHub ke Vercel
+
+MOTO-TRACK adalah aplikasi statis murni, sehingga proses deploy ke Vercel sangat cepat dan mudah:
+
+1. Push seluruh source code project ke repository GitHub Anda (misal `haris1808/MOTOTRACK`).
+2. Buka [https://vercel.com](https://vercel.com) dan login dengan akun GitHub.
+3. Klik tombol **Add New... > Project**.
+4. Cari dan pilih repository **MOTOTRACK**, lalu klik **Import**.
+5. Pada bagian **Framework Preset**, biarkan bernilai **Other** (atau Static Site).
+6. **Root Directory:** `./` (default).
+7. Klik tombol **Deploy**.
+8. Dalam beberapa detik, situs Anda sudah aktif di URL publik Vercel (contoh: `https://mototrack.vercel.app`).
+9. Buka URL Vercel tersebut, login sebagai `admin`, lalu hubungkan Supabase via modal pengaturan Cloud.
+
+---
+
+## 6. Panduan Penggunaan Fitur
 
 ### Menambah Motor Baru
+1. Klik tombol **+ Tambah Motor** di samping pilihan motor.
+2. Masukkan nama motor, tahun pembuatan, plat nomor, kilometer saat ini, dan tipe preset part (**Standar Motor Matic** / **Kosong**).
+3. Klik **Simpan Motor**.
 
-1. Klik dropdown pemilihan motor di bagian atas dashboard.
-2. Pilih **Tambah Motor Baru**.
-3. Isi form data motor (nama, tipe, tahun, dll).
-4. Pilih preset part: **Standar Motor Matic** (berisi part umum yang sudah dikonfigurasi) atau **Kosong** (tanpa part bawaan).
-5. Simpan.
+### Menghapus Motor
+1. Buka menu opsi pada motor yang ingin dihapus.
+2. Klik tombol **Hapus Motor** dan konfirmasi. Motor beserta seluruh part dan catatan servisnya akan terhapus baik di lokal maupun di cloud database.
 
-### Mengatur Odometer
+### Memantau Status & Mengganti Sparepart
+1. Pada kartu sparepart, sistem menampilkan indikator visual:
+   - **Hijau (Aman):** Pemakaian di bawah 70% dari batas interval.
+   - **Kuning (Perhatian):** Pemakaian 70% - 99% dari batas interval. Segera siapkan part pengganti.
+   - **Merah (Wajib Ganti / Overdue):** Pemakaian 100% ke atas. Wajib segera diganti.
+2. Klik **Tandai Sudah Diganti** untuk mencatat penggantian sparepart dan mereset odometer part.
 
-- Klik tombol **Edit KM** untuk memasukkan angka kilometer secara manual.
-- Atau gunakan tombol quick increment untuk menambah KM secara cepat: **+25**, **+50**, **+100**, atau **+500 KM**.
+### Menghapus Part atau Catatan Riwayat Servis
+1. **Hapus Part:** Klik ikon sampah pada kartu sparepart dan konfirmasi.
+2. **Hapus Catatan Riwayat:** Masuk ke tab **Riwayat & Catatan Servis**, klik tombol sampah pada baris riwayat yang ingin dihapus. Perubahan akan langsung tersinkron ke Supabase.
 
-### Menambah Part Kustom
-
-1. Klik tombol **Tambah Part Kustom**.
-2. Isi nama part, kategori, interval KM penggantian, dan KM terakhir diganti.
-3. Simpan. Part baru akan muncul di daftar part motor yang sedang aktif.
-
-### Mencatat Servis / Menandai Part Sudah Diganti
-
-1. Pada kartu part yang ingin dicatat, klik tombol **Tandai Sudah Diganti**.
-2. Isi detail servis:
-   - Tanggal penggantian
-   - KM saat penggantian
-   - Merek part yang digunakan
-   - Nama bengkel
-   - Harga / biaya servis
-3. Klik **Simpan**. KM terakhir diganti akan diperbarui otomatis.
-
-### Melihat Riwayat Servis
-
-Klik tab **Riwayat & Catatan Servis** untuk melihat seluruh catatan penggantian part beserta detail biaya, bengkel, dan merek part yang pernah digunakan.
-
-### Melihat Statistik Biaya
-
-Klik tab **Statistik Biaya & Analisis** untuk melihat ringkasan total biaya servis, grafik pengeluaran, dan analisis per kategori part.
-
-### Export Data
-
-1. Klik ikon **Backup** di header.
-2. Pilih **Unduh File JSON**.
-3. File backup akan terunduh ke komputer. Simpan file ini sebagai cadangan data.
-
-### Import Data
-
-1. Klik ikon **Backup** di header.
-2. Pilih **Pilih File Cadangan**.
-3. Pilih file JSON yang sebelumnya pernah di-export.
-4. Data dari file akan dimuat ke dalam aplikasi.
-
-### Muat Data Demo
-
-1. Klik ikon **Backup** di header.
-2. Pilih **Muat Demo**.
-3. Aplikasi akan memuat 2 motor contoh beserta riwayat servis untuk keperluan uji coba.
-
-### Reset Data
-
-1. Klik ikon **Backup** di header.
-2. Pilih **Hapus Semua Data**.
-3. Konfirmasi penghapusan. **Perhatian:** tindakan ini tidak bisa di-undo. Seluruh data di localStorage akan dihapus permanen.
-
-### Cetak Rekap
-
-Klik ikon **Printer** di header untuk mencetak rekap kondisi part dan riwayat servis motor yang sedang aktif.
+### Backup & Restore Data (JSON)
+- Klik ikon **Cadangan & Demo** di header.
+- **Unduh File JSON:** Menyimpan seluruh data motor dan servis ke file `.json`.
+- **Pulihkan dari File JSON:** Memuat data cadangan kembali ke aplikasi.
+- **Muat Data Demo:** Memuat data simulasi untuk mencoba fitur aplikasi.
+- **Hapus Semua Data:** Mengosongkan data motor dan riwayat yang dimiliki pengguna saat ini.
 
 ---
 
-## 6. Memahami Status Part
+## 7. Troubleshooting / Tanya Jawab (FAQ)
 
-Setiap part memiliki indikator status berdasarkan persentase pemakaian terhadap interval KM penggantian:
+### Tanya: Mengapa data yang dihapus sebelumnya sempat muncul kembali?
+**Jawaban & Solusi:**
+Hal tersebut terjadi jika:
+1. **Mode Cloud belum aktif saat penghapusan dilakukan:** Jika Supabase belum terhubung saat menghapus part/motor, penghapusan hanya terjadi di memori browser lokal. Saat Supabase terhubung kemudian hari, data dari cloud ditarik kembali.
+   *Solusi yang sudah diperbaiki:* Sistem kini otomatis menghubungkan cloud terlebih dahulu sebelum memuat atau memodifikasi data, dan proses hapus di cloud dipastikan tereksekusi dengan validasi response.
+2. **Auto-seeding Data Demo:** Sebelumnya sistem memuat ulang data demo jika daftar motor kosong.
+   *Solusi yang sudah diperbaiki:* Sistem kini hanya memuat data demo sekali saat instalasi pertama, dan tidak akan memaksakan pembuatan data demo saat pengguna sengaja menghapus motor/datanya.
 
-| Status | Warna | Kondisi | Keterangan |
-|--------|-------|---------|------------|
-| Aman | Hijau | Di bawah 70% interval KM | Part masih dalam kondisi baik, belum perlu diganti. |
-| Perhatian | Kuning | 70% -- 99% interval KM | Part mendekati batas penggantian. Segera siapkan part pengganti. |
-| Wajib Ganti / Overdue | Merah | 100% atau lebih dari interval KM | Part sudah melewati batas penggantian. Harus segera diganti. |
+### Tanya: Bagaimana cara memastikan Supabase Cloud aktif di Vercel?
+1. Login sebagai `admin`.
+2. Lihat indikator di kanan atas header. Jika berwarna hijau dengan teks **Cloud Terhubung**, berarti semua aktivitas (tambah, edit, hapus) langsung tersinkron ke database PostgreSQL Supabase.
+3. Jika masih **Mode Lokal**, klik tombol tersebut dan masukkan URL serta Anon Key dari Supabase Dashboard.
 
-Contoh: jika interval penggantian oli adalah 2000 KM dan sudah terpakai 1500 KM sejak penggantian terakhir (75%), maka status part adalah **Kuning (Perhatian)**.
-
----
-
-## 7. Deployment ke Hosting (Opsional)
-
-Karena MOTO-TRACK adalah aplikasi statis (HTML + CSS + JS), deployment dapat dilakukan di layanan hosting statis manapun tanpa konfigurasi build.
-
-### GitHub Pages
-
-1. Push folder `motor-reminder` ke repository GitHub.
-2. Buka **Settings > Pages** pada repository tersebut.
-3. Pilih branch yang digunakan (misalnya `main`) dan folder root (`/`).
-4. Tunggu beberapa menit, situs akan tersedia di `https://<username>.github.io/<repo-name>`.
-
-### Netlify
-
-1. Buka [https://app.netlify.com/drop](https://app.netlify.com/drop).
-2. Drag-and-drop seluruh folder `motor-reminder` ke area upload.
-3. Netlify akan otomatis meng-host aplikasi dan memberikan URL publik.
-
-### Vercel
-
-1. Push folder `motor-reminder` ke repository GitHub.
-2. Buka [https://vercel.com](https://vercel.com) dan login.
-3. Klik **Import Project**, pilih repository dari GitHub.
-4. Deploy tanpa konfigurasi tambahan.
-
----
-
-## 8. Troubleshooting / FAQ
-
-**Data hilang setelah clear browser?**
-Data yang tersimpan di localStorage akan hilang jika cache browser di-clear. Untuk menghindari kehilangan data, gunakan Supabase sebagai backend cloud atau lakukan export ke file JSON secara berkala melalui fitur backup.
-
-**Supabase tidak bisa connect?**
-Periksa kembali nilai Supabase URL dan Anon Key yang dimasukkan. Pastikan keduanya benar dan tidak ada spasi tambahan. Pastikan juga SQL schema sudah dijalankan di SQL Editor Supabase (langkah 5 pada bagian Setup Supabase).
-
-**Part tidak muncul setelah tambah motor?**
-Saat menambah motor baru, pastikan memilih preset **Standar Motor Matic** agar part-part umum otomatis ditambahkan. Jika memilih preset Kosong, tidak ada part yang dimuat secara otomatis dan harus ditambahkan manual.
-
-**Bagaimana cara ganti password login?**
-Password login di-hardcode di source code. Untuk menggantinya, buka file `app.js` dan cari bagian yang berisi konfigurasi credentials, kemudian ubah nilai username dan password sesuai kebutuhan.
+### Tanya: Bagaimana cara mengganti password atau mengelola akun pengguna?
+- Masuk ke menu **Edit Profil** (ikon user di pojok kanan atas) untuk mengubah nama atau password akun sendiri.
+- Akun `admin` dapat membuka menu **Kelola Pengguna** (ikon users di samping database) untuk mengelola semua akun pengguna lain.
 
 ---
 
 ## Struktur File Project
 
 ```
-motor-reminder/
-  index.html            -- Halaman utama aplikasi (SPA)
-  styles.css            -- Stylesheet aplikasi
-  app.js                -- Logika utama aplikasi
-  supabase-config.js    -- Konfigurasi koneksi Supabase
-  manifest.json         -- Manifest untuk PWA
-  supabase-schema.sql   -- SQL schema untuk setup database Supabase
-  Panduan.md            -- Dokumen ini
+MOTOTRACK/
+  ├── index.html            # File HTML utama (Single Page Application)
+  ├── styles.css            # Desain styling antarmuka modern & responsif
+  ├── app.js                # Logika utama aplikasi, DataStore, & UI controller
+  ├── supabase-config.js    # Pengelola koneksi dan konfigurasi Supabase Cloud
+  ├── supabase-schema.sql   # SQL Schema (tabel, foreign key cascade, index, RLS)
+  ├── manifest.json         # Konfigurasi Progressive Web App (PWA)
+  ├── assets/               # Ikon SVG sparepart motor matic
+  └── Panduan.md            # Dokumentasi panduan penggunaan & deployment
 ```
+

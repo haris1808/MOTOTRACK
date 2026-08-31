@@ -159,6 +159,32 @@
       return users;
     }
 
+    async function syncUsersFromCloud() {
+      if (!isCloud()) return;
+      try {
+        var res = await sb().from('users').select('*');
+        if (res && res.data && res.data.length > 0) {
+          var cloudUsers = res.data.map(function (u) {
+            return {
+              id: u.id,
+              username: u.username,
+              fullName: u.full_name || u.fullName || u.username,
+              password: u.password,
+              created_at: u.created_at || new Date().toISOString()
+            };
+          });
+          var localUsers = lsGet(LS_USERS) || [];
+          var userMap = {};
+          localUsers.forEach(function (u) { userMap[u.id] = u; });
+          cloudUsers.forEach(function (u) { userMap[u.id] = u; });
+          var mergedUsers = Object.values(userMap);
+          lsSet(LS_USERS, mergedUsers);
+        }
+      } catch (e) {
+        console.warn('syncUsersFromCloud error:', e);
+      }
+    }
+
     function saveUser(user) {
       var users = getUsers();
       var idx = users.findIndex(function (u) { return u.id === user.id; });
@@ -173,7 +199,11 @@
             full_name: user.fullName || user.username,
             password: user.password,
             created_at: user.created_at || new Date().toISOString()
-          }, { onConflict: 'id' }).then(function () {}).catch(function () {});
+          }, { onConflict: 'id' }).then(function (res) {
+            if (res && res.error) console.error('Cloud saveUser error:', res.error);
+          }).catch(function (e) {
+            console.warn('Cloud saveUser sync failed:', e);
+          });
         } catch (e) { console.warn('Cloud saveUser sync failed:', e); }
       }
       return user;
@@ -206,7 +236,11 @@
             full_name: newUser.fullName,
             password: newUser.password,
             created_at: newUser.created_at
-          }, { onConflict: 'id' }).then(function () {}).catch(function () {});
+          }, { onConflict: 'id' }).then(function (res) {
+            if (res && res.error) console.error('Cloud registerUser error:', res.error);
+          }).catch(function (e) {
+            console.warn('Cloud registerUser sync failed:', e);
+          });
         } catch (e) { console.warn('Cloud registerUser sync failed:', e); }
       }
 
@@ -316,7 +350,10 @@
             updated_at: vehicle.updated_at
           };
           var res = await sb().from('vehicles').upsert(cloudVeh, { onConflict: 'id' });
-          if (res.error) throw res.error;
+          if (res.error) {
+            console.error('Cloud saveVehicle error:', res.error);
+            throw res.error;
+          }
         } catch (e) {
           console.warn('Cloud saveVehicle failed:', e);
         }
@@ -331,9 +368,15 @@
     async function deleteVehicle(id) {
       if (isCloud()) {
         try {
-          await sb().from('service_logs').delete().eq('vehicle_id', id);
-          await sb().from('parts').delete().eq('vehicle_id', id);
-          await sb().from('vehicles').delete().eq('id', id);
+          // Delete related records in cloud
+          var r1 = await sb().from('service_logs').delete().eq('vehicle_id', id);
+          if (r1 && r1.error) console.error('Cloud delete vehicle service_logs error:', r1.error);
+          var r2 = await sb().from('parts').delete().eq('vehicle_id', id);
+          if (r2 && r2.error) console.error('Cloud delete vehicle parts error:', r2.error);
+          var r3 = await sb().from('vehicles').delete().eq('id', id);
+          if (r3 && r3.error) {
+            console.error('Cloud delete vehicle error:', r3.error);
+          }
         } catch (e) {
           console.warn('Cloud deleteVehicle failed:', e);
         }
@@ -382,7 +425,10 @@
             updated_at: part.updated_at
           };
           var res = await sb().from('parts').upsert(cloudPart, { onConflict: 'id' });
-          if (res.error) throw res.error;
+          if (res.error) {
+            console.error('Cloud savePart error:', res.error);
+            throw res.error;
+          }
         } catch (e) {
           console.warn('Cloud savePart failed:', e);
         }
@@ -403,7 +449,10 @@
     async function deletePart(id) {
       if (isCloud()) {
         try {
-          await sb().from('parts').delete().eq('id', id);
+          var res = await sb().from('parts').delete().eq('id', id);
+          if (res && res.error) {
+            console.error('Cloud deletePart error:', res.error);
+          }
         } catch (e) { console.warn('Cloud deletePart failed:', e); }
       }
       lsSet(LS_PARTS, lsGet(LS_PARTS).filter(function (p) { return p.id !== id; }));
@@ -441,8 +490,8 @@
             part_name: log.part_name || '',
             part_category: log.part_category || '',
             service_date: log.service_date,
-            odometer: Number(log.odometer) || 0,
-            odometer_km: Number(log.odometer) || 0,
+            odometer: Number(log.odometer || log.odometer_km) || 0,
+            odometer_km: Number(log.odometer || log.odometer_km) || 0,
             part_brand: log.part_brand || '',
             shop_name: log.shop_name || '',
             part_price: Number(log.part_price) || 0,
@@ -451,7 +500,10 @@
             created_at: log.created_at
           };
           var res = await sb().from('service_logs').upsert(cloudLog, { onConflict: 'id' });
-          if (res.error) throw res.error;
+          if (res.error) {
+            console.error('Cloud saveServiceLog error:', res.error);
+            throw res.error;
+          }
         } catch (e) { console.warn('Cloud saveServiceLog failed:', e); }
       }
       var arr = lsGet(LS_LOGS);
@@ -464,7 +516,10 @@
     async function deleteServiceLog(id) {
       if (isCloud()) {
         try {
-          await sb().from('service_logs').delete().eq('id', id);
+          var res = await sb().from('service_logs').delete().eq('id', id);
+          if (res && res.error) {
+            console.error('Cloud deleteServiceLog error:', res.error);
+          }
         } catch (e) { console.warn('Cloud deleteServiceLog failed:', e); }
       }
       lsSet(LS_LOGS, lsGet(LS_LOGS).filter(function (l) { return l.id !== id; }));
@@ -508,13 +563,60 @@
       if (isCloud()) {
         try {
           if (data.vehicles && data.vehicles.length) {
-            await sb().from('vehicles').upsert(data.vehicles, { onConflict: 'id' });
+            var cloudVehicles = data.vehicles.map(function (v) {
+              return {
+                id: v.id,
+                user_id: v.user_id || uid,
+                name: v.name,
+                year: Number(v.year) || new Date().getFullYear(),
+                plate: v.plate || '',
+                current_odometer: Number(v.current_odometer) || 0,
+                preset_type: v.preset_type || 'standard_matic',
+                created_at: v.created_at || new Date().toISOString(),
+                updated_at: v.updated_at || new Date().toISOString()
+              };
+            });
+            await sb().from('vehicles').upsert(cloudVehicles, { onConflict: 'id' });
           }
           if (data.parts && data.parts.length) {
-            await sb().from('parts').upsert(data.parts, { onConflict: 'id' });
+            var cloudParts = data.parts.map(function (p) {
+              return {
+                id: p.id,
+                vehicle_id: p.vehicle_id,
+                name: p.name,
+                category: p.category,
+                interval_km: Number(p.interval_km) || 4000,
+                last_replaced_km: Number(p.last_replaced_km) || 0,
+                icon: p.icon || 'wrench',
+                image_url: p.image_url || null,
+                est_price: Number(p.est_price) || 0,
+                description: p.description || '',
+                created_at: p.created_at || new Date().toISOString(),
+                updated_at: p.updated_at || new Date().toISOString()
+              };
+            });
+            await sb().from('parts').upsert(cloudParts, { onConflict: 'id' });
           }
           if (data.serviceLogs && data.serviceLogs.length) {
-            await sb().from('service_logs').upsert(data.serviceLogs, { onConflict: 'id' });
+            var cloudLogs = data.serviceLogs.map(function (l) {
+              return {
+                id: l.id,
+                vehicle_id: l.vehicle_id,
+                part_id: l.part_id || null,
+                part_name: l.part_name || '',
+                part_category: l.part_category || '',
+                service_date: l.service_date,
+                odometer: Number(l.odometer || l.odometer_km) || 0,
+                odometer_km: Number(l.odometer || l.odometer_km) || 0,
+                part_brand: l.part_brand || '',
+                shop_name: l.shop_name || '',
+                part_price: Number(l.part_price) || 0,
+                labor_fee: Number(l.labor_fee) || 0,
+                notes: l.notes || '',
+                created_at: l.created_at || new Date().toISOString()
+              };
+            });
+            await sb().from('service_logs').upsert(cloudLogs, { onConflict: 'id' });
           }
         } catch (e) { console.warn('Cloud import sync failed:', e); }
       }
@@ -525,10 +627,6 @@
       var myVehicles = lsGet(LS_VEHICLES).filter(function (v) { return (v.user_id || 'usr_admin_default') === uid; });
       var myVehIds = myVehicles.map(function (v) { return v.id; });
 
-      lsSet(LS_VEHICLES, lsGet(LS_VEHICLES).filter(function (v) { return (v.user_id || 'usr_admin_default') !== uid; }));
-      lsSet(LS_PARTS, lsGet(LS_PARTS).filter(function (p) { return myVehIds.indexOf(p.vehicle_id) === -1; }));
-      lsSet(LS_LOGS, lsGet(LS_LOGS).filter(function (l) { return myVehIds.indexOf(l.vehicle_id) === -1; }));
-
       if (isCloud()) {
         try {
           for (var i = 0; i < myVehIds.length; i++) {
@@ -538,6 +636,10 @@
           }
         } catch (e) { console.warn('Cloud clearAllData failed:', e); }
       }
+
+      lsSet(LS_VEHICLES, lsGet(LS_VEHICLES).filter(function (v) { return (v.user_id || 'usr_admin_default') !== uid; }));
+      lsSet(LS_PARTS, lsGet(LS_PARTS).filter(function (p) { return myVehIds.indexOf(p.vehicle_id) === -1; }));
+      lsSet(LS_LOGS, lsGet(LS_LOGS).filter(function (l) { return myVehIds.indexOf(l.vehicle_id) === -1; }));
     }
 
     function getAdminUsersData() {
@@ -597,6 +699,7 @@
             await sb().from('parts').delete().eq('vehicle_id', userVehIds[i]);
             await sb().from('vehicles').delete().eq('id', userVehIds[i]);
           }
+          await sb().from('users').delete().eq('id', userId);
         } catch (e) { console.warn('Cloud deleteUser failed:', e); }
       }
 
@@ -616,6 +719,7 @@
 
     return {
       getUsers: getUsers,
+      syncUsersFromCloud: syncUsersFromCloud,
       saveUser: saveUser,
       registerUser: registerUser,
       authenticateUser: authenticateUser,
@@ -786,8 +890,12 @@
     return Boolean(DataStore.getCurrentUser());
   }
 
-  function doLogin(username, password) {
+  async function doLogin(username, password) {
     var user = DataStore.authenticateUser(username, password);
+    if (!user && window.SupabaseManager && SupabaseManager.isCloudMode()) {
+      await DataStore.syncUsersFromCloud();
+      user = DataStore.authenticateUser(username, password);
+    }
     if (user) {
       DataStore.setCurrentUser(user);
       return user;
@@ -795,7 +903,7 @@
     return null;
   }
 
-  function doRegister(fullName, username, password) {
+  async function doRegister(fullName, username, password) {
     var user = DataStore.registerUser({ fullName: fullName, username: username, password: password });
     if (user) {
       DataStore.setCurrentUser(user);
@@ -981,8 +1089,10 @@
     var user = DataStore.getCurrentUser();
     var vehicles = await DataStore.getVehicles();
 
-    // If default admin and 0 vehicles, load demo data
-    if ((!vehicles || vehicles.length === 0) && user && user.username === 'admin') {
+    // If default admin, 0 vehicles, and never initialized before, seed demo data once
+    var demoSeeded = localStorage.getItem('mototrack_demo_seeded');
+    if ((!vehicles || vehicles.length === 0) && user && user.username === 'admin' && !demoSeeded) {
+      localStorage.setItem('mototrack_demo_seeded', '1');
       await loadDemoData();
       vehicles = await DataStore.getVehicles();
     }
@@ -1956,18 +2066,23 @@
   }
 
   async function tryAutoConnectCloud() {
-    var user = DataStore.getCurrentUser();
-    var isAdmin = Boolean(user && user.username && user.username.toLowerCase() === 'admin');
-    if (!isAdmin) return;
-    if (!window.SupabaseManager) return;
+    if (!window.SupabaseManager) return false;
     var config = SupabaseManager.getConfig();
-    if (!config || !config.url || !config.anonKey) return;
+    if (!config || !config.url || !config.anonKey) {
+      updateCloudPill(false);
+      return false;
+    }
 
     try {
       var ok = await SupabaseManager.testConnection();
       updateCloudPill(ok);
+      if (ok) {
+        await DataStore.syncUsersFromCloud();
+      }
+      return ok;
     } catch (e) {
       updateCloudPill(false);
+      return false;
     }
   }
 
@@ -2000,13 +2115,16 @@
         var errorAlert = document.getElementById('loginErrorAlert');
         var errorMsg = document.getElementById('loginErrorMessage');
 
-        var user = doLogin(username, password);
+        // Pastikan cloud sudah dicoba koneksikan sebelum validasi akun
+        await tryAutoConnectCloud();
+
+        var user = await doLogin(username, password);
         if (user) {
           if (errorAlert) errorAlert.style.display = 'none';
           showApp();
           activeVehicleId = null;
           await initAppData(true);
-          tryAutoConnectCloud();
+          updateCloudPill(window.SupabaseManager && SupabaseManager.isCloudMode());
           showToast('Selamat datang kembali, ' + (user.fullName || user.username) + '!', 'success');
         } else {
           if (errorAlert) errorAlert.style.display = '';
@@ -2046,12 +2164,14 @@
         }
 
         try {
-          var user = doRegister(fullName, username, password);
+          await tryAutoConnectCloud();
+          var user = await doRegister(fullName, username, password);
           if (user) {
             if (errorAlert) errorAlert.style.display = 'none';
             showApp();
             activeVehicleId = null;
             await initAppData(false);
+            updateCloudPill(window.SupabaseManager && SupabaseManager.isCloudMode());
             showToast('Akun berhasil didaftarkan! Selamat datang di MOTO-TRACK, ' + (user.fullName || user.username) + '!', 'success');
           }
         } catch (err) {
@@ -3013,6 +3133,8 @@
     if (typeof lucide !== 'undefined') lucide.createIcons();
   }
 
+  // ── Helper: Prefill Part Edit Form ─────────────────────────
+
   async function handleEditPart(partId) {
     if (!partId) return;
     var parts = await DataStore.getParts(activeVehicleId);
@@ -3022,21 +3144,32 @@
     var editIdEl = document.getElementById('editPartId');
     if (editIdEl) editIdEl.value = part.id;
 
-    document.getElementById('partName').value = part.name || '';
-    document.getElementById('partCategory').value = part.category || 'mesin';
-    document.getElementById('partIntervalKm').value = part.interval_km || '';
-    document.getElementById('partLastReplacedKm').value = part.last_replaced_km || 0;
-    document.getElementById('partIcon').value = part.icon || 'wrench';
-    document.getElementById('partImageUrl').value = part.image_url || '';
-    document.getElementById('partEstPrice').value = part.est_price || '';
-    document.getElementById('partDescription').value = part.description || '';
+    var nameEl = document.getElementById('partNameInput');
+    if (nameEl) nameEl.value = part.name || '';
+
+    var catEl = document.getElementById('partCategorySelect');
+    if (catEl) catEl.value = part.category || 'mesin';
+
+    var intervalEl = document.getElementById('partIntervalInput');
+    if (intervalEl) intervalEl.value = part.interval_km || 4000;
+
+    var lastKmEl = document.getElementById('partLastKmInput');
+    if (lastKmEl) lastKmEl.value = part.last_replaced_km || 0;
+
+    var priceEl = document.getElementById('partEstPriceInput');
+    if (priceEl) priceEl.value = part.est_price || 0;
+
+    var descEl = document.getElementById('partDescInput');
+    if (descEl) descEl.value = part.description || '';
 
     var title = document.getElementById('partModalTitle');
     if (title) title.innerHTML = '<i data-lucide="edit-3"></i> Edit Sparepart';
 
-    openModal('partFormModal');
+    openModal('partModal');
     if (typeof lucide !== 'undefined') lucide.createIcons();
   }
+
+  // ── Helper: Handle Part Deletion ───────────────────────────
 
   async function handleDeletePart(partId) {
     if (!partId) return;
@@ -3046,7 +3179,7 @@
 
     var confirmed = await showConfirmDialog({
       title: 'Hapus Sparepart',
-      message: 'Apakah Anda yakin ingin menghapus sparepart <strong>"' + escHtml(partName) + '"</strong> dari daftar pemantauan?',
+      message: 'Apakah Anda yakin ingin menghapus sparepart <strong>"' + escHtml(partName) + '"</strong> dari pemantauan?',
       icon: 'trash-2',
       type: 'danger',
       confirmText: 'Ya, Hapus Part',
@@ -3123,12 +3256,13 @@
     // Setup all event listeners
     setupEventListeners();
 
+    // Auto-connect cloud first if configured
+    await tryAutoConnectCloud();
+
     // Check auth
     if (isAuthenticated()) {
       showApp();
 
-      // Auto-connect cloud in background
-      tryAutoConnectCloud();
 
       // Load app data & check maintenance alerts
       await initAppData(true);
